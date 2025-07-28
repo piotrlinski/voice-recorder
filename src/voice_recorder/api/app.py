@@ -2,7 +2,6 @@
 Main application factory and dependency injection setup.
 """
 
-import os
 import signal
 import sys
 from typing import Optional
@@ -20,6 +19,7 @@ from ..domain.interfaces import (
 from ..domain.models import ApplicationConfig
 from ..infrastructure.audio_feedback import SystemAudioFeedback
 from ..infrastructure.audio_recorder import PyAudioRecorder
+from ..infrastructure.config_manager import ConfigManager
 from ..infrastructure.hotkey import PynputHotkeyListener
 from ..infrastructure.session_manager import InMemorySessionManager
 from ..infrastructure.text_paster import MacOSTextPaster
@@ -30,21 +30,23 @@ from ..services.voice_recorder_service import VoiceRecorderService
 class VoiceRecorderApp:
     """Main application class with dependency injection."""
 
-    def __init__(self, config: Optional[ApplicationConfig] = None):
+    def __init__(self, config: Optional[ApplicationConfig] = None, env_file: Optional[str] = None):
         # Load environment variables
-        load_dotenv("my.env")
-        self.openai_api_key = os.getenv("OPENAI_API_KEY")
-        if not self.openai_api_key:
-            raise RuntimeError("OPENAI_API_KEY not set in my.env or environment")
-        # Use provided config or create default
-        self.config = config or ApplicationConfig()
+        if env_file:
+            load_dotenv(env_file)
+        else:
+            load_dotenv()
+        
+        # Use provided config or load from config manager
+        if config is None:
+            config_manager = ConfigManager()
+            self.config = config_manager.load_config()
+        else:
+            self.config = config
+        
+        
         # Initialize infrastructure components
         self.audio_recorder: AudioRecorder = PyAudioRecorder()
-        
-        # Create transcription service based on configuration
-        if self.config.transcription_config.mode.value == "openai_whisper":
-            # Set API key for OpenAI mode
-            self.config.transcription_config.api_key = self.openai_api_key
         
         self.transcription_service: TranscriptionService = TranscriptionServiceFactory.create_service(
             self.config.transcription_config
@@ -53,7 +55,7 @@ class VoiceRecorderApp:
         self.hotkey_listener: HotkeyListener = PynputHotkeyListener()
         self.text_paster: TextPaster = MacOSTextPaster()
         self.session_manager: SessionManager = InMemorySessionManager()
-        self.audio_feedback: AudioFeedback = SystemAudioFeedback()
+        self.audio_feedback: AudioFeedback = SystemAudioFeedback(self.config.sound_config)
         # Initialize main service
         self.voice_recorder_service = VoiceRecorderService(
             audio_recorder=self.audio_recorder,
@@ -112,9 +114,9 @@ class VoiceRecorderApp:
             print(f"Error stopping voice recorder: {e}")
 
 
-def create_app(config: Optional[ApplicationConfig] = None) -> VoiceRecorderApp:
+def create_app(config: Optional[ApplicationConfig] = None, env_file: Optional[str] = None) -> VoiceRecorderApp:
     """Factory function to create the voice recorder application."""
-    return VoiceRecorderApp(config)
+    return VoiceRecorderApp(config, env_file=env_file)
 
 
 def main():

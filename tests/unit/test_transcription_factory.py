@@ -31,7 +31,7 @@ class TestTranscriptionServiceFactory:
             api_key=None
         )
         
-        with pytest.raises(ValueError, match="OpenAI API key required"):
+        with pytest.raises(RuntimeError, match="OPENAI_API_KEY not set"):
             TranscriptionServiceFactory.create_service(config)
 
     def test_create_local_whisper_service(self):
@@ -43,33 +43,9 @@ class TestTranscriptionServiceFactory:
         
         with patch('src.voice_recorder.infrastructure.transcription.factory.LocalWhisperTranscriptionService') as mock_service:
             service = TranscriptionServiceFactory.create_service(config)
-            mock_service.assert_called_once_with("base")
+            mock_service.assert_called_once_with(config)
 
-    def test_create_ollama_whisper_service(self):
-        """Test creating Ollama Whisper transcription service."""
-        config = TranscriptionConfig(
-            mode=TranscriptionMode.OLLAMA_WHISPER,
-            ollama_base_url="http://localhost:11434"
-        )
-        
-        with patch('src.voice_recorder.infrastructure.transcription.factory.OllamaWhisperTranscriptionService') as mock_service:
-            service = TranscriptionServiceFactory.create_service(config)
-            mock_service.assert_called_once_with(base_url="http://localhost:11434")
-
-    def test_create_ollama_model_service(self):
-        """Test creating Ollama model transcription service."""
-        config = TranscriptionConfig(
-            mode=TranscriptionMode.OLLAMA_MODEL,
-            model_name="llama3.2",
-            ollama_base_url="http://localhost:11434"
-        )
-        
-        with patch('src.voice_recorder.infrastructure.transcription.factory.OllamaModelTranscriptionService') as mock_service:
-            service = TranscriptionServiceFactory.create_service(config)
-            mock_service.assert_called_once_with(
-                model_name="llama3.2",
-                base_url="http://localhost:11434"
-            )
+    # Note: Ollama service tests have been removed as Ollama services are no longer supported
 
     def test_create_unsupported_mode(self):
         """Test creating service with unsupported mode."""

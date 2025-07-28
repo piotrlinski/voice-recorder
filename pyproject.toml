@@ -40,6 +40,8 @@ dependencies = [
     "pyaudio>=0.2.0",
     "pydantic>=2.0.0",
     "ollama>=0.1.0",
+    "typer>=0.9.0",
+    "rich>=13.0.0",
 ]
 
 [project.optional-dependencies]
@@ -75,10 +77,7 @@ Repository = "https://github.com/voicerecorder/voice-recorder"
 Changelog = "https://github.com/voicerecorder/voice-recorder/blob/main/CHANGELOG.md"
 
 [project.scripts]
-voice-recorder = "voice_recorder.api.app:main"
-
-[project.gui-scripts]
-voice-recorder-gui = "voice_recorder.api.app:main"
+voice-recorder = "voice_recorder.cli.main:app"
 
 [tool.setuptools.packages.find]
 where = ["src"]

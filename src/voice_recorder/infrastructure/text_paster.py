@@ -71,18 +71,4 @@ end tell
             return self._paste_at_cursor_position()
 
 
-class MockTextPaster:
-    """Mock text paster for testing."""
 
-    def __init__(self):
-        self.pasted_texts = []
-
-    def paste_text(self, text: str, position: Optional[str] = None) -> bool:
-        """Mock paste text."""
-        self.pasted_texts.append({"text": text, "position": position})
-        print(f"Mock pasted: {text} at {position or 'cursor'}")
-        return True
-
-    def get_pasted_texts(self):
-        """Get list of pasted texts for testing."""
-        return self.pasted_texts

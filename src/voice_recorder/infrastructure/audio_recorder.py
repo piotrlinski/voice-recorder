@@ -90,6 +90,10 @@ class PyAudioRecorder:
             del self.audio_streams[session_id]
             # Save audio frames to file
             if session_id in self.audio_frames and self.audio_frames[session_id]:
+                frames_count = len(self.audio_frames[session_id])
+                total_bytes = sum(len(frame) for frame in self.audio_frames[session_id])
+                print(f"Audio frames captured: {frames_count} frames, {total_bytes} bytes")
+                
                 temp_file = tempfile.NamedTemporaryFile(suffix=".wav", delete=False)
                 temp_file.close()
                 with wave.open(temp_file.name, "wb") as wf:
@@ -100,6 +104,12 @@ class PyAudioRecorder:
                         wf.setsampwidth(2)  # Default for 16-bit audio
                     wf.setframerate(16000)
                     wf.writeframes(b"".join(self.audio_frames[session_id]))
+                
+                # Verify the file was created and has content
+                import os
+                file_size = os.path.getsize(temp_file.name)
+                print(f"Audio file created: {temp_file.name}, size: {file_size} bytes")
+                
                 # Clean up frames
                 del self.audio_frames[session_id]
                 print(f"PyAudio recording stopped (Session: {session_id})")

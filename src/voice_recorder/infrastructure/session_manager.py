@@ -53,33 +53,56 @@ class MockSessionManager:
     """Mock session manager for testing."""
 
     def __init__(self):
-        self.sessions = []
+        self.sessions: List[RecordingSession] = []
         self.create_count = 0
         self.update_count = 0
+        self.get_count = 0
+        self.delete_count = 0
+        self.clear_count = 0
 
     def create_session(self) -> RecordingSession:
-        """Create a mock session."""
+        """Create a new recording session."""
         self.create_count += 1
+        session_id = f"mock_session_{self.create_count}"
         session = RecordingSession(
-            id=f"mock_session_{self.create_count}",
-            start_time=datetime.now(),
-            state=RecordingState.IDLE,
+            id=session_id, start_time=datetime.now(), state=RecordingState.IDLE
         )
         self.sessions.append(session)
         return session
 
     def update_session(self, session: RecordingSession) -> None:
-        """Update mock session."""
+        """Update session information."""
         self.update_count += 1
-        # Find and update the session
         for i, existing_session in enumerate(self.sessions):
             if existing_session.id == session.id:
                 self.sessions[i] = session
                 break
 
     def get_session(self, session_id: str) -> Optional[RecordingSession]:
-        """Get mock session by ID."""
+        """Get session by ID."""
+        self.get_count += 1
         for session in self.sessions:
             if session.id == session_id:
                 return session
         return None
+
+    def get_all_sessions(self) -> List[RecordingSession]:
+        """Get all sessions."""
+        return list(self.sessions)
+
+    def delete_session(self, session_id: str) -> bool:
+        """Delete a session."""
+        self.delete_count += 1
+        for i, session in enumerate(self.sessions):
+            if session.id == session_id:
+                del self.sessions[i]
+                return True
+        return False
+
+    def clear_sessions(self) -> None:
+        """Clear all sessions."""
+        self.clear_count += 1
+        self.sessions.clear()
+
+
+

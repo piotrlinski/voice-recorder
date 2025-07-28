@@ -9,15 +9,21 @@ from ...domain.models import TranscriptionResult
 class LocalWhisperTranscriptionService(TranscriptionService):
     """Local OpenAI Whisper transcription service implementation."""
 
-    def __init__(self, model_name: str = "base"):
+    def __init__(self, config):
         """Initialize Local Whisper transcription service."""
-        self.model_name = model_name
+        self.model_name = config.model_name
         self.model = None
         try:
             import whisper
-            # Load the model (you can specify different sizes: tiny, base, small, medium, large)
-            self.model = whisper.load_model(self.model_name)
-            print(f"Local Whisper model '{self.model_name}' loaded successfully")
+            import warnings
+            
+            # Suppress FP16 warning
+            with warnings.catch_warnings():
+                warnings.filterwarnings("ignore", message="FP16 is not supported on CPU")
+                # Load the model
+                self.model = whisper.load_model(self.model_name)
+            
+            print(f"Local Whisper model '{self.model_name}' loaded successfully (FP32)")
         except ImportError:
             raise RuntimeError("openai-whisper not available. Install with: pip install openai-whisper")
         except Exception as e:
@@ -29,8 +35,13 @@ class LocalWhisperTranscriptionService(TranscriptionService):
             raise RuntimeError("Local Whisper model not initialized")
         
         try:
-            # Transcribe the audio file
-            result = self.model.transcribe(audio_file_path)
+            import warnings
+            
+            # Suppress FP16 warning during transcription
+            with warnings.catch_warnings():
+                warnings.filterwarnings("ignore", message="FP16 is not supported on CPU")
+                # Transcribe the audio file with FP32 precision
+                result = self.model.transcribe(audio_file_path, fp16=False)
             
             return TranscriptionResult(
                 text=result["text"],

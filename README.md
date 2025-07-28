@@ -30,7 +30,7 @@ src/voice_recorder/
 │       ├── openai_service.py
 │       ├── local_whisper_service.py
 │       ├── ollama_whisper_service.py
-│       ├── ollama_model_service.py
+│       ├── (ollama services removed)
 │       └── mock_service.py
 └── api/             # Application entry points
 ```
@@ -74,23 +74,26 @@ src/voice_recorder/
    pip install -e ".[dev,test]"
    ```
 
-4. **Install PortAudio (required for PyAudio):**
+4. **Install system dependencies:**
    ```bash
+   # Install PortAudio (required for PyAudio)
    brew install portaudio
+   
+   # Install ffmpeg (required for local Whisper transcription)
+   brew install ffmpeg
    ```
 
-5. **Configure transcription mode:**
-   
-   **Option A: Interactive configuration**
+5. **Initialize configuration:**
    ```bash
-   python configure_transcription.py
+   voice-recorder init
    ```
    
-   **Option B: Manual configuration**
-   Create a `my.env` file in the project root:
-   ```
-   OPENAI_API_KEY=your_openai_api_key_here  # For OpenAI mode
-   ```
+   This will guide you through setting up:
+   - Transcription mode (OpenAI, Local Whisper, Ollama)
+   - Model selection
+   - Audio settings
+   - Hotkey configuration
+   - General preferences
 
 ### Alternative Installation Methods
 
@@ -102,26 +105,85 @@ pip install voice-recorder
 **Using the entry point:**
 ```bash
 # After installation, you can run:
-voice-recorder
+voice-recorder start
 ```
 
 ## Usage
 
+### CLI Commands
+
+The application provides a comprehensive CLI interface:
+
+#### Initialize Configuration
+```bash
+# Initialize with default settings
+voice-recorder init
+
+# Initialize with custom config directory
+voice-recorder init --config-dir ~/custom_config
+
+# Force overwrite existing configuration
+voice-recorder init --force
+```
+
+#### Start the Application
+```bash
+# Start with default configuration
+voice-recorder start
+
+# Start with custom config file
+voice-recorder start --config ~/.voicerecorder/config.json
+
+# Start with custom environment file
+voice-recorder start --env-file ~/.custom_env
+
+# Start with verbose output
+voice-recorder start --verbose
+```
+
+#### Manage Configuration
+```bash
+# Show current configuration
+voice-recorder config --show
+
+# Edit configuration interactively
+voice-recorder config --edit
+
+# Reset to defaults
+voice-recorder config --reset
+
+# Show application status
+voice-recorder status
+
+# Manage temporary files
+voice-recorder purge --dry-run  # Preview files to be deleted
+voice-recorder purge --force     # Delete without confirmation
+
+# Remove temporary voice files
+voice-recorder purge --dry-run  # Preview what would be deleted
+voice-recorder purge --force     # Delete without confirmation
+```
+
 ### Running the Application
 
-**Method 1: Using the installed package**
+**Method 1: Using the CLI (Recommended)**
+```bash
+voice-recorder start
+```
+
+**Method 2: Using the installed package**
 ```bash
 voice-recorder
 ```
 
-**Method 2: Python module execution**
+**Method 3: Python module execution**
 ```bash
-python -m voice_recorder.api.app
+python -m voice_recorder.cli.main start
 ```
 
-**Method 3: Direct execution (development)**
+**Method 4: Direct execution (development)**
 ```bash
-python -c "import sys; sys.path.insert(0, 'src'); from voice_recorder.api.app import main; main()"
+python -c "import sys; sys.path.insert(0, 'src'); from voice_recorder.cli.main import app; app()"
 ```
 
 The application will start and listen for the Shift key. When you press and hold Shift, it will:
@@ -144,13 +206,14 @@ The application supports multiple transcription modes to suit different needs:
 - **Note**: Uses OpenAI API v1.0+ (latest version)
 
 #### 2. Local Whisper (Offline)
-- **Pros**: Works offline, no API costs
+- **Pros**: Works offline, no API costs, optimized for CPU
 - **Cons**: Requires model download, more setup
 - **Setup**: 
   ```bash
-  pip install whisper-cpp-python
+  pip install openai-whisper
   # Models are downloaded automatically
   ```
+- **Note**: Automatically uses FP32 precision to avoid CPU compatibility warnings
 
 #### 3. Ollama Whisper (Local)
 - **Pros**: Easy setup, good performance, official Python client
@@ -174,20 +237,89 @@ The application supports multiple transcription modes to suit different needs:
 
 ### Configuration
 
+The application uses a JSON-based configuration system stored in `~/.voicerecorder/config.json`.
+
 **Interactive Configuration:**
 ```bash
-python configure_transcription.py
+voice-recorder init
 ```
 
-**Manual Configuration:**
-You can customize the application behavior by modifying the configuration in `src/voice_recorder/api/app.py`:
+**Show Current Configuration:**
+```bash
+voice-recorder config --show
+```
 
+**Edit Configuration:**
+```bash
+voice-recorder config --edit
+```
+
+**Configuration Options:**
 - **Transcription Mode**: Choose between OpenAI, Local Whisper, Ollama
 - **Model Selection**: Specify which model to use
 - **Hotkey**: Change the trigger key (default: Shift)
 - **Audio Settings**: Sample rate, channels, format
 - **Auto-paste**: Enable/disable automatic text pasting
-- **Audio Feedback**: Enable/disable beep sounds
+- **Sound Feedback**: Enable/disable and customize recording sounds
+- **Temp Directory**: Customize temporary file storage location
+
+**Configuration Examples:**
+See the `examples/` directory for sample configuration files:
+- `config_local_whisper.json` - Local Whisper setup
+- `config_openai_whisper.json` - OpenAI Whisper setup
+- (Ollama model examples removed)
+- `config_beep.json` - System beep sounds
+- `config_quiet_tone.json` - Very quiet tones
+- `config_custom_tone.json` - Custom tone settings
+- `config_no_sound.json` - Silent operation
+
+### Environment Variables
+
+The application supports custom environment files for API keys and other sensitive configuration:
+
+**Default Behavior:**
+- Automatically loads `.env` file from the current directory
+- Falls back to system environment variables
+
+**Custom Environment File:**
+```bash
+# Use a custom .env file
+voice-recorder start --env-file ~/.my_custom_env
+
+# Use a different environment file for testing
+voice-recorder start --env-file ~/.test_env
+```
+
+**Environment Variables:**
+- `OPENAI_API_KEY`: Required for OpenAI Whisper mode
+- `OLLAMA_BASE_URL`: Optional, defaults to `http://localhost:11434`
+
+### Sound Configuration
+
+The application provides customizable audio feedback when recording starts and stops:
+
+**Sound Types:**
+- **Tone**: High-quality ascending/descending tones (default)
+- **Beep**: Simple system beep sounds
+- **None**: No audio feedback
+
+**Sound Settings:**
+- **Volume**: Adjustable from 0.0 to 1.0 (default: 0.15)
+- **Frequency Range**: Customizable start/end frequencies (default: 800Hz-1200Hz)
+- **Duration**: Adjustable sound duration (default: 0.3 seconds)
+- **Enabled/Disabled**: Toggle sound feedback on/off
+
+**Default Configuration:**
+- **Start Sound**: Ascending tone (800Hz → 1200Hz)
+- **Stop Sound**: Descending tone (1200Hz → 800Hz)
+- **Volume**: 15% (quiet and pleasant)
+- **Duration**: 0.3 seconds
+
+**Configuration:**
+- Sound feedback is enabled by default
+- Customize via CLI: `voice-recorder config --edit`
+- Uses PyAudio for high-quality audio playback
+- Falls back to system beep if PyAudio fails
 
 ## Testing
 
@@ -312,7 +444,15 @@ my-voice-recorder/
    - Install PortAudio: `brew install portaudio`
    - Reinstall PyAudio: `pip install --force-reinstall pyaudio`
 
-2. **"OpenAI API key not found"**
+2. **"ffmpeg not found" (for local Whisper)**
+   - Install ffmpeg: `brew install ffmpeg`
+   - This is required for local Whisper transcription
+
+3. **FP16/FP32 warnings (for local Whisper)**
+   - These warnings are automatically suppressed in the application
+   - The service uses FP32 precision for better CPU compatibility
+
+4. **"OpenAI API key not found"**
    - Ensure `my.env` file exists with `OPENAI_API_KEY=your_key`
 
 3. **"Permission denied" for audio recording**

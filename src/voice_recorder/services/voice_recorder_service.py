@@ -101,8 +101,7 @@ class VoiceRecorderService:
             # Update session
             self.session_manager.update_session(self.current_session)
             # Audio feedback
-            if self.config.beep_feedback:
-                self.audio_feedback.play_start_beep()
+            self.audio_feedback.play_start_beep()
             print(f"Recording started (Session: {session_id})...")
         except Exception as e:
             print(f"Error starting recording: {e}")
@@ -135,8 +134,7 @@ class VoiceRecorderService:
             self.current_session.audio_file_path = audio_file_path
             self.session_manager.update_session(self.current_session)
             # Audio feedback
-            if self.config.beep_feedback:
-                self.audio_feedback.play_stop_beep()
+            self.audio_feedback.play_stop_beep()
             print("Recording stopped. Transcribing...")
             # Transcribe audio
             transcription_result = self.transcription_service.transcribe(

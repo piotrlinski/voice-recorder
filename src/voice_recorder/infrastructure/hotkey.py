@@ -73,23 +73,24 @@ class MockHotkeyListener:
     def start_listening(
         self, on_press: Callable[[Any], None], on_release: Callable[[Any], None]
     ) -> None:
-        """Start mock listening."""
+        """Start listening for hotkey events."""
         self.is_listening = True
         self.on_press_callback = on_press
         self.on_release_callback = on_release
-        print("Mock hotkey listener started")
 
     def stop_listening(self) -> None:
-        """Stop mock listening."""
+        """Stop listening for hotkey events."""
         self.is_listening = False
-        print("Mock hotkey listener stopped")
 
     def simulate_key_press(self, key):
-        """Simulate a key press for testing."""
-        if self.is_listening and self.on_press_callback:
+        """Simulate a key press event."""
+        if self.on_press_callback:
             self.on_press_callback(key)
 
     def simulate_key_release(self, key):
-        """Simulate a key release for testing."""
-        if self.is_listening and self.on_release_callback:
+        """Simulate a key release event."""
+        if self.on_release_callback:
             self.on_release_callback(key)
+
+
+

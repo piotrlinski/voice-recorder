@@ -3,23 +3,33 @@ Transcription services module.
 
 This module provides various transcription service implementations:
 - OpenAI Whisper (cloud-based)
-- Local Whisper (offline using Whisper.cpp)
-- Ollama Whisper (local using Ollama)
-- Ollama Models (any Ollama model)
+- Local Whisper (offline using OpenAI Whisper)
 """
 
 from .factory import TranscriptionServiceFactory
-from .openai_service import OpenAITranscriptionService
+from .openai_whisper_service import OpenAITranscriptionService
 from .local_whisper_service import LocalWhisperTranscriptionService
-from .ollama_whisper_service import OllamaWhisperTranscriptionService
-from .ollama_model_service import OllamaModelTranscriptionService
-from .mock_service import MockTranscriptionService
+
+
+class MockTranscriptionService:
+    """Mock transcription service for testing."""
+
+    def __init__(self, mock_text: str = "Test transcription"):
+        self.mock_text = mock_text
+
+    def transcribe(self, audio_file_path: str):
+        """Mock transcription method."""
+        from ...domain.models import TranscriptionResult
+        return TranscriptionResult(
+            text=self.mock_text,
+            confidence=0.95,
+            duration=1.0
+        )
+
 
 __all__ = [
     "TranscriptionServiceFactory",
     "OpenAITranscriptionService",
     "LocalWhisperTranscriptionService",
-    "OllamaWhisperTranscriptionService",
-    "OllamaModelTranscriptionService",
     "MockTranscriptionService",
 ] 
