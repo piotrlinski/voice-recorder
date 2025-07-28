@@ -16,7 +16,7 @@ from ..domain.interfaces import AudioFeedback, ConsoleInterface
 from ..domain.models import SoundConfig, SoundType
 
 
-class AudioFeedbackService(AudioFeedback):
+class SystemAudioFeedback(AudioFeedback):
     """System audio feedback implementation."""
 
     def __init__(self, sound_config: Optional[SoundConfig] = None, console: ConsoleInterface | None = None):

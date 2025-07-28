@@ -16,11 +16,10 @@ from ..domain.interfaces import (
     HotkeyListenerInterface,
     SessionManagerInterface,
     TextPasterInterface,
-    TranscriptionServiceInterface,
-    ConsoleInterface,
+    TranscriptionServiceInterface
 )
 from ..domain.models import ApplicationConfig
-from ..infrastructure.audio_feedback import AudioFeedbackService
+from ..infrastructure.audio_feedback import SystemAudioFeedback
 from ..infrastructure.audio_recorder import PyAudioRecorder
 from ..infrastructure.config_manager import ConfigManager
 from ..infrastructure.hotkey import PynputHotkeyListener
@@ -58,7 +57,7 @@ class VoiceRecorderApp:
         self.hotkey_listener: HotkeyListenerInterface = PynputHotkeyListener(console=self.console)
         self.text_paster: TextPasterInterface = MacOSTextPaster(console=self.console)
         self.session_manager: SessionManagerInterface = InMemorySessionManager()
-        self.audio_feedback: AudioFeedback = AudioFeedbackService(console=self.console)
+        self.audio_feedback: AudioFeedback = SystemAudioFeedback(console=self.console)
 
         # Initialize service layer
         self.voice_recorder_service = VoiceRecorderService(
