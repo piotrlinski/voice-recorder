@@ -1,0 +1,20 @@
+{
+  "audio_config": {
+    "sample_rate": 16000,
+    "channels": 1,
+    "format": "wav",
+    "chunk_size": 1024
+  },
+  "transcription_config": {
+    "mode": "openai_whisper",
+    "model_name": "whisper-1"
+  },
+  "hotkey_config": {
+    "key": "shift",
+    "modifiers": [],
+    "description": "Shift key for recording"
+  },
+  "auto_paste": true,
+  "beep_feedback": true,
+  "temp_directory": "/Users/username/.voicerecorder/temp"
+} 

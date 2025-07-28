@@ -1,0 +1,28 @@
+{
+  "audio_config": {
+    "sample_rate": 16000,
+    "channels": 1,
+    "format": "wav",
+    "chunk_size": 1024
+  },
+  "transcription_config": {
+    "mode": "local_whisper",
+    "model_name": "base"
+  },
+  "hotkey_config": {
+    "key": "shift",
+    "modifiers": [],
+    "description": "Shift key for recording"
+  },
+  "sound_config": {
+    "enabled": true,
+    "sound_type": "tone",
+    "volume": 0.05,
+    "start_frequency": 800.0,
+    "end_frequency": 1200.0,
+    "duration": 0.2
+  },
+  "auto_paste": true,
+  "beep_feedback": true,
+  "temp_directory": "/tmp"
+} 
