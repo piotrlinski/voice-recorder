@@ -119,6 +119,60 @@ def configure_hotkey_settings() -> dict:
     }
 
 
+def configure_sound_settings() -> dict:
+    """Configure sound feedback settings."""
+    console.print("\n🔊 Sound Feedback Configuration")
+    console.print("=" * 40)
+    
+    enabled = input("Enable audio feedback? (y/n, default: y): ").strip().lower()
+    enabled = enabled != "n"
+    
+    if enabled:
+        console.print("\nSound types:")
+        console.print("  1. tone - Custom tone (ascending/descending)")
+        console.print("  2. beep - System beep")
+        console.print("  3. none - No sound")
+        
+        sound_type_choice = input("Select sound type (1-3, default: 1): ").strip()
+        if sound_type_choice == "2":
+            sound_type = "beep"
+        elif sound_type_choice == "3":
+            sound_type = "none"
+        else:
+            sound_type = "tone"
+        
+        volume = input("Sound volume (0.0-1.0, default: 0.15): ").strip()
+        volume = float(volume) if volume else 0.15
+        
+        duration = input("Sound duration in seconds (default: 0.3): ").strip()
+        duration = float(duration) if duration else 0.3
+        
+        if sound_type == "tone":
+            start_freq = input("Start frequency in Hz (default: 800.0): ").strip()
+            start_freq = float(start_freq) if start_freq else 800.0
+            
+            end_freq = input("End frequency in Hz (default: 1200.0): ").strip()
+            end_freq = float(end_freq) if end_freq else 1200.0
+        else:
+            start_freq = 800.0
+            end_freq = 1200.0
+    else:
+        sound_type = "none"
+        volume = 0.15
+        duration = 0.3
+        start_freq = 800.0
+        end_freq = 1200.0
+    
+    return {
+        "sound_enabled": enabled,
+        "sound_type": sound_type,
+        "sound_volume": volume,
+        "sound_duration": duration,
+        "sound_start_frequency": start_freq,
+        "sound_end_frequency": end_freq
+    }
+
+
 def configure_general_settings() -> dict:
     """Configure general settings."""
     console.print("\n⚙️ General Settings")
@@ -127,15 +181,11 @@ def configure_general_settings() -> dict:
     auto_paste = input("Auto-paste transcribed text? (y/n, default: y): ").strip().lower()
     auto_paste = auto_paste != "n"
     
-    beep_feedback = input("Audio feedback for recording? (y/n, default: y): ").strip().lower()
-    beep_feedback = beep_feedback != "n"
-    
     temp_dir = input(f"Temporary directory (default: {Path.home() / '.voicerecorder' / 'temp'}): ").strip()
     temp_dir = temp_dir or str(Path.home() / ".voicerecorder" / "temp")
     
     return {
         "auto_paste": auto_paste,
-        "beep_feedback": beep_feedback,
         "temp_directory": temp_dir
     }
 
@@ -160,6 +210,9 @@ def run_configuration(config_manager: ConfigManager):
     # Configure hotkey
     hotkey_config = configure_hotkey_settings()
     
+    # Configure sound settings
+    sound_config = configure_sound_settings()
+    
     # Configure general settings
     general_config = configure_general_settings()
     
@@ -168,6 +221,7 @@ def run_configuration(config_manager: ConfigManager):
         transcription_config=transcription_config,
         audio_config=audio_config,
         hotkey_config=hotkey_config,
+        sound_config=sound_config,
         **general_config
     )
     
@@ -203,16 +257,20 @@ def show_configuration(config_manager: ConfigManager):
         table.add_row("API Key", "***" + config.transcription_config.api_key[-4:], "OpenAI API key")
     else:
         table.add_row("API Key", "Not set", "OpenAI API key")
-    table.add_row("Ollama URL", config.transcription_config.ollama_base_url, "Ollama server URL")
     
     # Hotkey settings
     table.add_row("Hotkey", config.hotkey_config.key, "Recording trigger key")
     table.add_row("Modifiers", ", ".join(config.hotkey_config.modifiers) if config.hotkey_config.modifiers else "None", "Key modifiers")
     table.add_row("Description", config.hotkey_config.description, "Hotkey description")
     
+    # Sound settings
+    table.add_row("Sound Enabled", str(config.sound_config.enabled), "Enable audio feedback")
+    table.add_row("Sound Type", config.sound_config.sound_type.value, "Type of sound feedback")
+    table.add_row("Sound Volume", f"{config.sound_config.volume:.2f}", "Sound volume (0.0-1.0)")
+    table.add_row("Sound Duration", f"{config.sound_config.duration}s", "Sound duration")
+    
     # General settings
     table.add_row("Auto-paste", str(config.auto_paste), "Automatically paste transcribed text")
-    table.add_row("Audio Feedback", str(config.beep_feedback), "Play audio feedback")
     table.add_row("Temp Directory", config.temp_directory, "Temporary file storage")
     
     console.print(table)

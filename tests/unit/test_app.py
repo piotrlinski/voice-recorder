@@ -37,8 +37,12 @@ class TestVoiceRecorderApp:
         assert isinstance(app.config, ApplicationConfig)
 
     @patch('src.voice_recorder.api.app.load_dotenv')
-    def test_init_without_api_key(self, mock_load_dotenv):
+    @patch('src.voice_recorder.infrastructure.transcription.factory.TranscriptionServiceFactory.create_service')
+    def test_init_without_api_key(self, mock_create_service, mock_load_dotenv):
         """Test VoiceRecorderApp initialization without API key."""
+        mock_service = Mock()
+        mock_create_service.return_value = mock_service
+        
         with patch.dict(os.environ, {}, clear=True):
             # The app should still initialize even without API key
             # since it uses the factory pattern now

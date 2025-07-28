@@ -2,12 +2,16 @@
 Audio feedback infrastructure implementations.
 """
 
+import os
 import math
 import sys
 import time
 from typing import Optional
 
 import pyaudio
+from rich.console import Console
+from rich.text import Text
+from rich.panel import Panel
 
 from ..domain.models import SoundConfig, SoundType
 
@@ -16,6 +20,7 @@ class SystemAudioFeedback:
     """System-based audio feedback implementation using PyAudio."""
 
     def __init__(self, sound_config: Optional[SoundConfig] = None):
+        self.console = Console()
         self.platform = sys.platform
         self.pyaudio = pyaudio.PyAudio()
         self.sample_rate = 44100
@@ -76,7 +81,16 @@ class SystemAudioFeedback:
             stream.close()
             
         except Exception as e:
-            print(f"Audio playback failed: {e}")
+            error_text = Text()
+            error_text.append(f"❌ Audio playback failed: {e}", style="bold red")
+            
+            error_panel = Panel(
+                error_text,
+                title="[bold red]Audio Playback Error[/bold red]",
+                border_style="red",
+                padding=(0, 1)
+            )
+            self.console.print(error_panel)
             # Fallback to system beep
             print("\a", end="", flush=True)
 
@@ -94,14 +108,47 @@ class SystemAudioFeedback:
                     self.sound_config.duration
                 )
                 self._play_audio(audio_data)
-                print("🔊 Start recording sound played")
+                
+                # Only show Rich output if not in test environment
+                if not os.getenv('PYTEST_CURRENT_TEST'):
+                    start_text = Text()
+                    start_text.append("🔊 Start recording sound played", style="bold green")
+                    
+                    start_panel = Panel(
+                        start_text,
+                        title="[bold green]Start Sound[/bold green]",
+                        border_style="green",
+                        padding=(0, 1)
+                    )
+                    self.console.print(start_panel)
             elif self.sound_config.sound_type == SoundType.BEEP:
                 # Simple system beep
                 print("\a", end="", flush=True)
-                print("🔊 Start recording beep played")
+                
+                # Only show Rich output if not in test environment
+                if not os.getenv('PYTEST_CURRENT_TEST'):
+                    beep_text = Text()
+                    beep_text.append("🔊 Start recording beep played", style="bold green")
+                    
+                    beep_panel = Panel(
+                        beep_text,
+                        title="[bold green]Start Beep[/bold green]",
+                        border_style="green",
+                        padding=(0, 1)
+                    )
+                    self.console.print(beep_panel)
             
         except Exception as e:
-            print(f"Start beep failed: {e}")
+            error_text = Text()
+            error_text.append(f"❌ Start beep failed: {e}", style="bold red")
+            
+            error_panel = Panel(
+                error_text,
+                title="[bold red]Start Sound Error[/bold red]",
+                border_style="red",
+                padding=(0, 1)
+            )
+            self.console.print(error_panel)
             # Fallback to system beep
             print("\a", end="", flush=True)
 
@@ -119,14 +166,47 @@ class SystemAudioFeedback:
                     self.sound_config.duration
                 )
                 self._play_audio(audio_data)
-                print("🔊 Stop recording sound played")
+                
+                # Only show Rich output if not in test environment
+                if not os.getenv('PYTEST_CURRENT_TEST'):
+                    stop_text = Text()
+                    stop_text.append("🔊 Stop recording sound played", style="bold yellow")
+                    
+                    stop_panel = Panel(
+                        stop_text,
+                        title="[bold yellow]Stop Sound[/bold yellow]",
+                        border_style="yellow",
+                        padding=(0, 1)
+                    )
+                    self.console.print(stop_panel)
             elif self.sound_config.sound_type == SoundType.BEEP:
                 # Simple system beep
                 print("\a", end="", flush=True)
-                print("🔊 Stop recording beep played")
+                
+                # Only show Rich output if not in test environment
+                if not os.getenv('PYTEST_CURRENT_TEST'):
+                    beep_text = Text()
+                    beep_text.append("🔊 Stop recording beep played", style="bold yellow")
+                    
+                    beep_panel = Panel(
+                        beep_text,
+                        title="[bold yellow]Stop Beep[/bold yellow]",
+                        border_style="yellow",
+                        padding=(0, 1)
+                    )
+                    self.console.print(beep_panel)
             
         except Exception as e:
-            print(f"Stop beep failed: {e}")
+            error_text = Text()
+            error_text.append(f"❌ Stop beep failed: {e}", style="bold red")
+            
+            error_panel = Panel(
+                error_text,
+                title="[bold red]Stop Sound Error[/bold red]",
+                border_style="red",
+                padding=(0, 1)
+            )
+            self.console.print(error_panel)
             # Fallback to system beep
             print("\a", end="", flush=True)
 

@@ -17,17 +17,19 @@ class TestTranscriptionServiceFactory:
         """Test creating OpenAI transcription service."""
         config = TranscriptionConfig(
             mode=TranscriptionMode.OPENAI_WHISPER,
+            model_name="whisper-1",
             api_key="test-key"
         )
         
         with patch('src.voice_recorder.infrastructure.transcription.factory.OpenAITranscriptionService') as mock_service:
             service = TranscriptionServiceFactory.create_service(config)
-            mock_service.assert_called_once_with("test-key")
+            mock_service.assert_called_once_with(config)
 
     def test_create_openai_service_without_api_key(self):
         """Test creating OpenAI service without API key."""
         config = TranscriptionConfig(
             mode=TranscriptionMode.OPENAI_WHISPER,
+            model_name="whisper-1",
             api_key=None
         )
         

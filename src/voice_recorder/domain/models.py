@@ -59,15 +59,11 @@ class TranscriptionConfig(BaseModel):
     )
     model_name: str = Field(
         default="whisper-1", 
-        description="Model name (OpenAI model or Ollama model)"
+        description="Model name (OpenAI model or local Whisper model)"
     )
     api_key: Optional[str] = Field(
         default=None, 
         description="API key for OpenAI (if using OpenAI mode)"
-    )
-    ollama_base_url: str = Field(
-        default="http://localhost:11434", 
-        description="Ollama server URL"
     )
 
 

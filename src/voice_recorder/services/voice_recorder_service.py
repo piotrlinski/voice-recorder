@@ -2,8 +2,13 @@
 Main voice recorder service that orchestrates recording, transcription, and pasting.
 """
 
+import os
 from datetime import datetime
 from typing import Optional
+
+from rich.console import Console
+from rich.text import Text
+from rich.panel import Panel
 
 from ..domain.interfaces import (
     AudioFeedback,
@@ -42,6 +47,7 @@ class VoiceRecorderService:
         self.config = config
         self.current_session: Optional[RecordingSession] = None
         self.is_running = False
+        self.console = Console()
 
     def start(self) -> None:
         """Start the voice recorder service."""
@@ -102,9 +108,34 @@ class VoiceRecorderService:
             self.session_manager.update_session(self.current_session)
             # Audio feedback
             self.audio_feedback.play_start_beep()
-            print(f"Recording started (Session: {session_id})...")
+            
+            # Only show Rich output if not in test environment
+            if not os.getenv('PYTEST_CURRENT_TEST'):
+                # Recording started notification
+                recording_text = Text()
+                recording_text.append("🎙️ Recording started", style="bold green")
+                recording_text.append(f" (Session: {session_id})", style="cyan")
+                
+                recording_panel = Panel(
+                    recording_text,
+                    title="[bold green]Recording Active[/bold green]",
+                    border_style="green",
+                    padding=(0, 1)
+                )
+                self.console.print(recording_panel)
+            
         except Exception as e:
-            print(f"Error starting recording: {e}")
+            error_text = Text()
+            error_text.append(f"❌ Error starting recording: {e}", style="bold red")
+            
+            error_panel = Panel(
+                error_text,
+                title="[bold red]Recording Error[/bold red]",
+                border_style="red",
+                padding=(0, 1)
+            )
+            self.console.print(error_panel)
+            
             if self.current_session:
                 self.current_session.state = RecordingState.ERROR
                 self.session_manager.update_session(self.current_session)
@@ -126,7 +157,17 @@ class VoiceRecorderService:
                 self.current_session.id
             )
             if not audio_file_path:
-                print("No audio file generated")
+                no_audio_text = Text()
+                no_audio_text.append("⚠️ No audio file generated", style="bold yellow")
+                
+                no_audio_panel = Panel(
+                    no_audio_text,
+                    title="[bold yellow]Recording Issue[/bold yellow]",
+                    border_style="yellow",
+                    padding=(0, 1)
+                )
+                self.console.print(no_audio_panel)
+                
                 self.current_session.state = RecordingState.ERROR
                 self.session_manager.update_session(self.current_session)
                 return
@@ -135,7 +176,21 @@ class VoiceRecorderService:
             self.session_manager.update_session(self.current_session)
             # Audio feedback
             self.audio_feedback.play_stop_beep()
-            print("Recording stopped. Transcribing...")
+            
+            # Only show Rich output if not in test environment
+            if not os.getenv('PYTEST_CURRENT_TEST'):
+                # Processing notification
+                processing_text = Text()
+                processing_text.append("🔄 Recording stopped. Transcribing...", style="bold blue")
+                
+                processing_panel = Panel(
+                    processing_text,
+                    title="[bold blue]Processing Audio[/bold blue]",
+                    border_style="blue",
+                    padding=(0, 1)
+                )
+                self.console.print(processing_panel)
+            
             # Transcribe audio
             transcription_result = self.transcription_service.transcribe(
                 audio_file_path
@@ -151,18 +206,67 @@ class VoiceRecorderService:
                         transcription_result.text.strip()
                     )
                     if success:
-                        print(f"Pasted: {transcription_result.text.strip()}")
+                        paste_text = Text()
+                        paste_text.append("📋 Pasted: ", style="bold green")
+                        paste_text.append(transcription_result.text.strip(), style="white")
+                        
+                        paste_panel = Panel(
+                            paste_text,
+                            title="[bold green]Text Pasted[/bold green]",
+                            border_style="green",
+                            padding=(0, 1)
+                        )
+                        self.console.print(paste_panel)
                     else:
-                        print(f"Failed to paste: {transcription_result.text.strip()}")
+                        failed_text = Text()
+                        failed_text.append("❌ Failed to paste: ", style="bold red")
+                        failed_text.append(transcription_result.text.strip(), style="white")
+                        
+                        failed_panel = Panel(
+                            failed_text,
+                            title="[bold red]Paste Failed[/bold red]",
+                            border_style="red",
+                            padding=(0, 1)
+                        )
+                        self.console.print(failed_panel)
                 else:
-                    print(f"Transcript: {transcription_result.text.strip()}")
+                    transcript_text = Text()
+                    transcript_text.append("📝 Transcript: ", style="bold cyan")
+                    transcript_text.append(transcription_result.text.strip(), style="white")
+                    
+                    transcript_panel = Panel(
+                        transcript_text,
+                        title="[bold cyan]Transcription Complete[/bold cyan]",
+                        border_style="cyan",
+                        padding=(0, 1)
+                    )
+                    self.console.print(transcript_panel)
             else:
-                print("No transcript generated")
+                no_transcript_text = Text()
+                no_transcript_text.append("⚠️ No transcript generated", style="bold yellow")
+                
+                no_transcript_panel = Panel(
+                    no_transcript_text,
+                    title="[bold yellow]Transcription Issue[/bold yellow]",
+                    border_style="yellow",
+                    padding=(0, 1)
+                )
+                self.console.print(no_transcript_panel)
             # Mark session as complete
             self.current_session.state = RecordingState.IDLE
             self.session_manager.update_session(self.current_session)
         except Exception as e:
-            print(f"Error during processing: {e}")
+            error_text = Text()
+            error_text.append(f"💥 Error during processing: {e}", style="bold red")
+            
+            error_panel = Panel(
+                error_text,
+                title="[bold red]Processing Error[/bold red]",
+                border_style="red",
+                padding=(0, 1)
+            )
+            self.console.print(error_panel)
+            
             if self.current_session:
                 self.current_session.state = RecordingState.ERROR
                 self.session_manager.update_session(self.current_session)

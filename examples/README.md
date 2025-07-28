@@ -6,15 +6,12 @@ This directory contains various configuration examples for the voice recorder ap
 
 ### Transcription Mode Examples
 
-#### 1. `config_local_whisper.json` - Local Whisper (Offline)
+#### 1. `config_local_whisper.ini` - Local Whisper (Offline)
 **Use Case**: Offline transcription using OpenAI Whisper
-```json
-{
-  "transcription_config": {
-    "mode": "local_whisper",
-    "model_name": "base"
-  }
-}
+```ini
+[transcription]
+mode = local_whisper
+model_name = base
 ```
 **Features**:
 - Works offline (no internet required)
@@ -22,16 +19,13 @@ This directory contains various configuration examples for the voice recorder ap
 - Requires model download on first use
 - Optimized for CPU with FP32 precision
 
-#### 2. `config_openai_whisper.json` - OpenAI Whisper (Cloud)
+#### 2. `config_openai_whisper.ini` - OpenAI Whisper (Cloud)
 **Use Case**: High-accuracy cloud-based transcription
-```json
-{
-  "transcription_config": {
-    "mode": "openai_whisper",
-    "model_name": "whisper-1",
-    "api_key": "your-openai-api-key"
-  }
-}
+```ini
+[transcription]
+mode = openai_whisper
+model_name = whisper-1
+api_key = your-openai-api-key
 ```
 **Features**:
 - Highest accuracy
@@ -39,113 +33,149 @@ This directory contains various configuration examples for the voice recorder ap
 - Internet connection required
 - Pay-per-use pricing
 
-# Note: Ollama model configuration examples have been removed as Ollama services are no longer supported
-
 ### Sound Configuration Examples
 
-#### 4. `config_beep.json` - System Beep Sounds
+#### 3. `config_beep.ini` - System Beep Sounds
 **Use Case**: Simple, system-native beep sounds
-```json
-{
-  "sound_config": {
-    "enabled": true,
-    "sound_type": "beep",
-    "volume": 0.15
-  }
-}
+```ini
+[sound]
+enabled = true
+sound_type = beep
+volume = 0.15
 ```
 **Features**:
-- System beep compatibility
+- Uses system beep (`\a`) for audio feedback
+- Compatible with all operating systems
 - Minimal resource usage
-- Works on all operating systems
+- Volume setting is ignored (uses system volume)
 
-#### 5. `config_quiet_tone.json` - Very Quiet Tones
+#### 4. `config_quiet.ini` - Very Quiet Tones
 **Use Case**: Minimal audio feedback
-```json
-{
-  "sound_config": {
-    "enabled": true,
-    "sound_type": "tone",
-    "volume": 0.05,
-    "duration": 0.2
-  }
-}
+```ini
+[sound]
+enabled = true
+sound_type = tone
+volume = 0.05
+duration = 0.2
 ```
 **Features**:
 - Very low volume (5%)
 - Short duration (0.2s)
 - Suitable for quiet environments
 
-#### 6. `config_custom_tone.json` - Custom Tone Settings
+#### 5. `config_custom_tone.ini` - Custom Tone Settings
 **Use Case**: Customized frequency range and volume
-```json
-{
-  "sound_config": {
-    "enabled": true,
-    "sound_type": "tone",
-    "volume": 0.25,
-    "start_frequency": 600.0,
-    "end_frequency": 1000.0,
-    "duration": 0.4
-  }
-}
+```ini
+[sound]
+enabled = true
+sound_type = tone
+volume = 0.25
+start_frequency = 600.0
+end_frequency = 1000.0
+duration = 0.4
 ```
 **Features**:
 - Higher volume (25%)
 - Custom frequency range (600Hz-1000Hz)
 - Longer duration (0.4s)
+- More noticeable audio feedback
 
-#### 7. `config_no_sound.json` - Silent Operation
+#### 6. `config_no_sound.ini` - Silent Operation
 **Use Case**: No audio feedback during recording
-```json
-{
-  "sound_config": {
-    "enabled": false,
-    "sound_type": "none"
-  }
-}
+```ini
+[sound]
+enabled = false
+sound_type = none
 ```
 **Features**:
 - Completely silent operation
 - No audio feedback
 - Suitable for quiet environments
 
-## Documentation
+#### 7. `config_high_quality.ini` - High-Quality Audio Settings
+**Use Case**: Professional audio feedback
+```ini
+[sound]
+enabled = true
+sound_type = tone
+volume = 0.30
+start_frequency = 800.0
+end_frequency = 1200.0
+duration = 0.5
+```
+**Features**:
+- Higher volume (30%)
+- Standard frequency range (800Hz-1200Hz)
+- Longer duration (0.5s)
+- Professional audio feedback
 
-### `sound_configuration_examples.md`
-Comprehensive guide covering all sound configuration options, parameters, usage examples, and troubleshooting tips.
+## Sound Configuration Parameters
 
+### `enabled` (boolean)
+- **Default**: `true`
+- **Description**: Enable or disable sound feedback
+- **Values**: `true` (sounds enabled), `false` (sounds disabled)
 
+### `sound_type` (string)
+- **Default**: `"tone"`
+- **Description**: Type of sound to play
+- **Values**: 
+  - `"tone"` - High-quality frequency sweep tones
+  - `"beep"` - Simple system beep
+  - `"none"` - No sound (same as `enabled: false`)
 
-### `custom_transcription.py`
-Example script demonstrating how to use different transcription services programmatically.
+### `volume` (float)
+- **Default**: `0.15`
+- **Description**: Sound volume level
+- **Range**: `0.0` to `1.0`
+- **Note**: Only applies to `"tone"` type sounds
+
+### `start_frequency` (float)
+- **Default**: `800.0`
+- **Description**: Starting frequency for tone sweep (Hz)
+- **Range**: `20.0` to `20000.0`
+- **Note**: Only applies to `"tone"` type sounds
+
+### `end_frequency` (float)
+- **Default**: `1200.0`
+- **Description**: Ending frequency for tone sweep (Hz)
+- **Range**: `20.0` to `20000.0`
+- **Note**: Only applies to `"tone"` type sounds
+
+### `duration` (float)
+- **Default**: `0.3`
+- **Description**: Sound duration in seconds
+- **Range**: `0.1` to `5.0`
+- **Note**: Only applies to `"tone"` type sounds
 
 ## Usage
 
 ### Apply a Configuration
 ```bash
 # Copy a configuration example to your config directory
-cp examples/config_beep.json ~/.voicerecorder/config.json
+cp examples/config_beep.ini ~/.voicerecorder/config.ini
 
 # Or use with the --config flag
-voice-recorder start --config examples/config_quiet_tone.json
+voice-recorder start --config examples/config_quiet.ini
 ```
 
-### Test Configurations
+### Test Sound Configurations
 ```bash
-# Test sound configurations
+# Test the beep configuration
 python -c "
 import sys; sys.path.insert(0, 'src')
 from voice_recorder.domain.models import SoundConfig, SoundType
 from voice_recorder.infrastructure.audio_feedback import SystemAudioFeedback
 import time
 
+# Test beep configuration
 config = SoundConfig(enabled=True, sound_type=SoundType.BEEP)
 feedback = SystemAudioFeedback(config)
+print('Testing beep sound...')
 feedback.play_start_beep()
 time.sleep(1)
 feedback.play_stop_beep()
-print('Test completed!')
+print('Beep test completed!')
 "
 ```
 
@@ -161,35 +191,86 @@ voice-recorder status
 ## Quick Start
 
 1. **Choose your transcription mode**:
-   - For offline use: `config_local_whisper.json`
-   - For best accuracy: `config_openai_whisper.json`
-   - (Ollama model examples removed)
+   - For offline use: `config_local_whisper.ini`
+   - For best accuracy: `config_openai_whisper.ini`
 
 2. **Choose your sound preference**:
-   - For quiet operation: `config_quiet_tone.json` or `config_no_sound.json`
-   - For system compatibility: `config_beep.json`
-   - For custom sounds: `config_custom_tone.json`
+   - For quiet operation: `config_quiet.ini` or `config_no_sound.ini`
+   - For system compatibility: `config_beep.ini`
+   - For custom sounds: `config_custom_tone.ini`
+   - For professional use: `config_high_quality.ini`
 
 3. **Apply the configuration**:
    ```bash
-   cp examples/config_local_whisper.json ~/.voicerecorder/config.json
+   cp examples/config_local_whisper.ini ~/.voicerecorder/config.ini
    voice-recorder start
    ```
 
 ## Recommended Combinations
 
 ### Quiet Office Environment
-- Transcription: `config_local_whisper.json`
-- Sound: `config_quiet_tone.json`
+- Transcription: `config_local_whisper.ini`
+- Sound: `config_quiet.ini`
 
 ### Noisy Environment
-- Transcription: `config_openai_whisper.json`
-- Sound: `config_custom_tone.json` (higher volume)
+- Transcription: `config_openai_whisper.ini`
+- Sound: `config_custom_tone.ini` (higher volume)
 
 ### System Compatibility Focus
-- Transcription: `config_local_whisper.json`
-- Sound: `config_beep.json`
+- Transcription: `config_local_whisper.ini`
+- Sound: `config_beep.ini`
 
 ### Maximum Privacy
-- Transcription: `config_local_whisper.json`
-- Sound: `config_no_sound.json` 
+- Transcription: `config_local_whisper.ini`
+- Sound: `config_no_sound.ini`
+
+### Professional Use
+- Transcription: `config_openai_whisper.ini`
+- Sound: `config_high_quality.ini`
+
+## Troubleshooting
+
+### No Sound Heard
+1. Check if sound is enabled: `voice-recorder status`
+2. Verify system volume is not muted
+3. Try the beep configuration for system compatibility
+4. Check if PyAudio is properly installed
+
+### Sound Too Loud/Quiet
+1. Adjust the `volume` parameter (0.0 to 1.0)
+2. Try different `sound_type` values
+3. Use system volume control for beep sounds
+
+### Sound Quality Issues
+1. Ensure PyAudio is installed: `pip install pyaudio`
+2. Try different frequency ranges
+3. Adjust duration for better clarity
+
+### Configuration Issues
+1. Verify INI file format is correct
+2. Check file permissions: `ls -la ~/.voicerecorder/`
+3. Use `voice-recorder status` to verify current settings
+4. Try `voice-recorder init` to reset configuration
+
+## Recommended Settings by Environment
+
+### For Quiet Environments
+- Use `config_quiet.ini` or `config_no_sound.ini`
+- Volume: 0.05-0.10
+- Duration: 0.2 seconds
+
+### For Noisy Environments
+- Use `config_custom_tone.ini`
+- Volume: 0.25-0.50
+- Duration: 0.4-0.5 seconds
+
+### For System Compatibility
+- Use `config_beep.ini`
+- Works on all systems
+- Uses system volume control
+
+### For High-Quality Audio
+- Use `config_high_quality.ini`
+- Volume: 0.30
+- Frequency: 800Hz-1200Hz
+- Duration: 0.5 seconds 

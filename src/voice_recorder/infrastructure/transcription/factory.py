@@ -17,7 +17,7 @@ class TranscriptionServiceFactory:
     def create_service(config: TranscriptionConfig) -> TranscriptionService:
         """Create a transcription service based on configuration."""
         if config.mode == TranscriptionMode.OPENAI_WHISPER:
-            return OpenAITranscriptionService(config.api_key)
+            return OpenAITranscriptionService(config)
         
         elif config.mode == TranscriptionMode.LOCAL_WHISPER:
             return LocalWhisperTranscriptionService(config)
