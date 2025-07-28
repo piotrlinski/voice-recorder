@@ -5,9 +5,6 @@ Hotkey listening infrastructure implementations.
 import os
 from typing import Any, Callable, Optional
 
-from rich.panel import Panel
-from rich.text import Text
-
 from ..domain.interfaces import HotkeyListenerInterface, ConsoleInterface
 
 

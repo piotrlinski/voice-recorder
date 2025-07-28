@@ -5,9 +5,6 @@ Local Whisper transcription service implementation.
 import os
 from typing import Optional
 
-from rich.panel import Panel
-from rich.text import Text
-
 from ...domain.interfaces import TranscriptionServiceInterface, ConsoleInterface
 from ...domain.models import TranscriptionConfig, TranscriptionResult
 

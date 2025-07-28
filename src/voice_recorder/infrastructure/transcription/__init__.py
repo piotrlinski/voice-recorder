@@ -10,10 +10,6 @@ from .factory import TranscriptionServiceFactory
 from .openai_whisper_service import OpenAITranscriptionService
 from .local_whisper_service import LocalWhisperTranscriptionService
 
-
-
-
-
 __all__ = [
     "TranscriptionServiceFactory",
     "OpenAITranscriptionService",

@@ -3,10 +3,7 @@ OpenAI Whisper transcription service implementation.
 """
 
 import os
-from typing import Optional
 
-from rich.panel import Panel
-from rich.text import Text
 
 from ...domain.interfaces import TranscriptionServiceInterface, ConsoleInterface
 from ...domain.models import TranscriptionConfig, TranscriptionResult
@@ -23,7 +20,10 @@ class OpenAITranscriptionService(TranscriptionServiceInterface):
         
         try:
             import openai
-            self.client = openai.OpenAI(api_key=config.api_key)
+
+            api_key = config.api_key or os.getenv("OPENAI_API_KEY")
+
+            self.client = openai.OpenAI(api_key=api_key)
             
             if self.console:
                 self.console.print_success("✅ OpenAI client initialized")

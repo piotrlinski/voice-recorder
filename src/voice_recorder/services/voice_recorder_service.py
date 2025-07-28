@@ -6,9 +6,6 @@ import os
 from datetime import datetime
 from typing import Optional
 
-from rich.panel import Panel
-from rich.text import Text
-
 from ..domain.interfaces import (
     AudioRecorderInterface,
     AudioFeedback,
@@ -119,6 +116,9 @@ class VoiceRecorderService:
             self.audio_feedback.play_start_beep()
             
             # Recording started notification
+            from rich.text import Text
+            from rich.panel import Panel
+            
             recording_text = Text()
             recording_text.append("🎙️ Recording started", style="bold green")
             recording_text.append(f" (Session: {session_id})", style="cyan")
@@ -164,6 +164,9 @@ class VoiceRecorderService:
                 self.current_session.id
             )
             if not audio_file_path:
+                from rich.text import Text
+                from rich.panel import Panel
+                
                 no_audio_text = Text()
                 no_audio_text.append("⚠️ No audio file generated", style="bold yellow")
                 

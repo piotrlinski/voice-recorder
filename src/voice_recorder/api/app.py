@@ -3,12 +3,9 @@ Voice recorder application entry point.
 """
 
 import os
-import sys
 from typing import Optional
 
-from rich.console import Console
-from rich.panel import Panel
-from rich.text import Text
+from dotenv import load_dotenv
 
 from ..domain.interfaces import (
     AudioRecorderInterface,
@@ -37,8 +34,9 @@ class VoiceRecorderApp:
         """Initialize the voice recorder application."""
         # Load environment variables if specified
         if env_file and os.path.exists(env_file):
-            from dotenv import load_dotenv
             load_dotenv(env_file)
+        else:
+            load_dotenv()
 
         # Initialize console
         self.console = RichConsoleAdapter()
@@ -80,11 +78,15 @@ class VoiceRecorderApp:
         """Handle shutdown signals."""
         self.console.print("\n🛑 [bold red]Shutting down voice recorder...[/bold red]")
         self.stop()
+        import sys
         sys.exit(0)
 
     def start(self):
         """Start the voice recorder application."""
         # Create startup panel
+        from rich.text import Text
+        from rich.panel import Panel
+        
         startup_text = Text()
         startup_text.append("🎤 Voice Recorder Application Starting...\n", style="bold blue")
         startup_text.append(f"⌨️  Hotkey: {self.config.hotkey_config.key}\n", style="cyan")
@@ -144,6 +146,9 @@ class VoiceRecorderApp:
         try:
             self.voice_recorder_service.stop()
             
+            from rich.text import Text
+            from rich.panel import Panel
+            
             stop_text = Text()
             stop_text.append("✅ Voice recorder stopped successfully!", style="bold green")
             
@@ -174,6 +179,11 @@ def create_app(config: Optional[ApplicationConfig] = None, env_file: Optional[st
 
 def main():
     """Main entry point for the voice recorder application."""
+    import sys
+    from rich.console import Console
+    from rich.text import Text
+    from rich.panel import Panel
+    
     console = Console()
     try:
         app = create_app()
