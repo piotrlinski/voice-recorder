@@ -15,6 +15,7 @@ class RecordingState(str, Enum):
     IDLE = "idle"
     RECORDING = "recording"
     PROCESSING = "processing"
+    COMPLETED = "completed"
     ERROR = "error"
 
 
@@ -121,7 +122,7 @@ class ApplicationConfig(BaseModel):
     audio_config: AudioConfig = Field(default_factory=AudioConfig)
     transcription_config: TranscriptionConfig = Field(default_factory=TranscriptionConfig)
     hotkey_config: HotkeyConfig = Field(
-        default=HotkeyConfig(key="shift", description="Shift key for recording")
+        default=HotkeyConfig(key="shift_r", description="Right Shift key for recording")
     )
     sound_config: SoundConfig = Field(default_factory=SoundConfig)
     auto_paste: bool = Field(default=True, description="Auto-paste transcribed text")

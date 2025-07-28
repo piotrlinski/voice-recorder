@@ -1,21 +1,22 @@
 """
-Text paster infrastructure implementations.
+Text pasting infrastructure implementations.
 """
 
-import os
 import subprocess
 from typing import Optional
 
-from rich.console import Console
-from rich.text import Text
 from rich.panel import Panel
+from rich.text import Text
+
+from ..domain.interfaces import TextPasterInterface, ConsoleInterface
 
 
-class MacOSTextPaster:
-    """macOS-specific text paster implementation."""
+class MacOSTextPaster(TextPasterInterface):
+    """macOS-specific text pasting implementation."""
 
-    def __init__(self):
-        self.console = Console()
+    def __init__(self, console: ConsoleInterface | None = None):
+        """Initialize macOS text paster."""
+        self.console = console
 
     def paste_text(self, text: str) -> bool:
         """Paste text at the current cursor position."""
@@ -35,42 +36,16 @@ class MacOSTextPaster:
                 '''
                 subprocess.run(["osascript", "-e", script], check=True)
                 
-                # Only show Rich output if not in test environment
-                if not os.getenv('PYTEST_CURRENT_TEST'):
-                    paste_text = Text()
-                    paste_text.append("📋 Text pasted successfully", style="bold green")
-                    
-                    paste_panel = Panel(
-                        paste_text,
-                        title="[bold green]Paste Success[/bold green]",
-                        border_style="green",
-                        padding=(0, 1)
-                    )
-                    self.console.print(paste_panel)
+                if self.console:
+                    self.console.print_success("📋 Text pasted successfully")
                 return True
             else:
-                error_text = Text()
-                error_text.append("❌ Failed to copy text to clipboard", style="bold red")
-                
-                error_panel = Panel(
-                    error_text,
-                    title="[bold red]Copy Error[/bold red]",
-                    border_style="red",
-                    padding=(0, 1)
-                )
-                self.console.print(error_panel)
+                if self.console:
+                    self.console.print_error("Failed to copy text to clipboard")
                 return False
         except Exception as e:
-            error_text = Text()
-            error_text.append(f"❌ Text pasting failed: {e}", style="bold red")
-            
-            error_panel = Panel(
-                error_text,
-                title="[bold red]Paste Error[/bold red]",
-                border_style="red",
-                padding=(0, 1)
-            )
-            self.console.print(error_panel)
+            if self.console:
+                self.console.print_error(f"Text pasting failed: {e}")
             return False
 
     def paste_at_mouse_position(self, text: str) -> bool:
@@ -92,46 +67,20 @@ class MacOSTextPaster:
                 '''
                 subprocess.run(["osascript", "-e", script], check=True)
                 
-                # Only show Rich output if not in test environment
-                if not os.getenv('PYTEST_CURRENT_TEST'):
-                    paste_text = Text()
-                    paste_text.append("📋 Text pasted at mouse position", style="bold green")
-                    
-                    paste_panel = Panel(
-                        paste_text,
-                        title="[bold green]Paste Success[/bold green]",
-                        border_style="green",
-                        padding=(0, 1)
-                    )
-                    self.console.print(paste_panel)
+                if self.console:
+                    self.console.print_success("📋 Text pasted at mouse position")
                 return True
             else:
-                error_text = Text()
-                error_text.append("❌ Failed to copy text to clipboard", style="bold red")
-                
-                error_panel = Panel(
-                    error_text,
-                    title="[bold red]Copy Error[/bold red]",
-                    border_style="red",
-                    padding=(0, 1)
-                )
-                self.console.print(error_panel)
+                if self.console:
+                    self.console.print_error("Failed to copy text to clipboard")
                 return False
         except Exception as e:
-            error_text = Text()
-            error_text.append(f"❌ Paste at cursor failed: {e}", style="bold red")
-            
-            error_panel = Panel(
-                error_text,
-                title="[bold red]Paste Error[/bold red]",
-                border_style="red",
-                padding=(0, 1)
-            )
-            self.console.print(error_panel)
+            if self.console:
+                self.console.print_error(f"Paste at cursor failed: {e}")
             return False
 
     def paste_text_with_mouse_position(self, text: str) -> bool:
-        """Paste text at the current mouse position."""
+        """Paste text with mouse position handling."""
         try:
             # Copy text to clipboard
             process = subprocess.Popen(
@@ -140,52 +89,62 @@ class MacOSTextPaster:
             process.communicate(input=text)
             
             if process.returncode == 0:
-                # Click at mouse position and paste
-                script = f'''
+                # Get mouse position and paste
+                mouse_script = '''
                 tell application "System Events"
-                    click at mouse location
-                    keystroke "v" using {{command down}}
+                    set mousePos to mouse location
+                    return mousePos
                 end tell
                 '''
-                subprocess.run(["osascript", "-e", script], check=True)
-                
-                # Only show Rich output if not in test environment
-                if not os.getenv('PYTEST_CURRENT_TEST'):
-                    paste_text = Text()
-                    paste_text.append("📋 Text pasted at mouse position", style="bold green")
-                    
-                    paste_panel = Panel(
-                        paste_text,
-                        title="[bold green]Paste Success[/bold green]",
-                        border_style="green",
-                        padding=(0, 1)
-                    )
-                    self.console.print(paste_panel)
-                return True
-            else:
-                error_text = Text()
-                error_text.append("❌ Failed to copy text to clipboard", style="bold red")
-                
-                error_panel = Panel(
-                    error_text,
-                    title="[bold red]Copy Error[/bold red]",
-                    border_style="red",
-                    padding=(0, 1)
+                mouse_result = subprocess.run(
+                    ["osascript", "-e", mouse_script],
+                    capture_output=True,
+                    text=True,
+                    check=True
                 )
-                self.console.print(error_panel)
+                
+                # Parse mouse position
+                mouse_pos = mouse_result.stdout.strip()
+                if mouse_pos:
+                    # Click at mouse position and paste
+                    paste_script = f'''
+                    tell application "System Events"
+                        click at mouse location
+                        keystroke "v" using {{command down}}
+                    end tell
+                    '''
+                    subprocess.run(["osascript", "-e", paste_script], check=True)
+                    
+                    if self.console:
+                        self.console.print_success("📋 Text pasted at mouse position")
+                    return True
+                else:
+                    # Fallback to regular paste
+                    fallback_script = f'''
+                    tell application "System Events"
+                        keystroke "v" using {{command down}}
+                    end tell
+                    '''
+                    subprocess.run(["osascript", "-e", fallback_script], check=True)
+                    
+                    if self.console:
+                        self.console.print_success("📋 Text pasted successfully")
+                    return True
+            else:
+                if self.console:
+                    self.console.print_error("Failed to copy text to clipboard")
                 return False
         except Exception as e:
-            error_text = Text()
-            error_text.append(f"❌ Paste at mouse position failed: {e}", style="bold red")
-            
-            error_panel = Panel(
-                error_text,
-                title="[bold red]Paste Error[/bold red]",
-                border_style="red",
-                padding=(0, 1)
-            )
-            self.console.print(error_panel)
+            if self.console:
+                self.console.print_error(f"Paste with mouse position failed: {e}")
             return False
+
+    def paste_text_with_position(self, text: str, position: Optional[str] = None) -> bool:
+        """Paste text at specified position."""
+        if position == "mouse":
+            return self.paste_at_mouse_position(text)
+        else:
+            return self.paste_text(text)
 
 
 

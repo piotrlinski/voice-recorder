@@ -24,6 +24,7 @@ class TestVoiceRecorderService:
         mock_text_paster,
         mock_session_manager,
         mock_audio_feedback,
+        mock_console,
     ):
         """Test service initialization with all components."""
         service = VoiceRecorderService(
@@ -34,6 +35,7 @@ class TestVoiceRecorderService:
             session_manager=mock_session_manager,
             audio_feedback=mock_audio_feedback,
             config=test_config,
+            console=mock_console,
         )
 
         assert service.audio_recorder == mock_audio_recorder
@@ -44,7 +46,7 @@ class TestVoiceRecorderService:
         assert service.audio_feedback == mock_audio_feedback
         assert service.config == test_config
         assert service.current_session is None
-        assert not service.is_running
+        assert not service.is_recording
 
     def test_start_service(
         self,
@@ -55,6 +57,7 @@ class TestVoiceRecorderService:
         mock_text_paster,
         mock_session_manager,
         mock_audio_feedback,
+        mock_console,
     ):
         """Test starting the service."""
         service = VoiceRecorderService(
@@ -65,11 +68,12 @@ class TestVoiceRecorderService:
             session_manager=mock_session_manager,
             audio_feedback=mock_audio_feedback,
             config=test_config,
+            console=mock_console,
         )
 
         service.start()
 
-        assert service.is_running
+        assert service.is_recording
         mock_hotkey_listener.start_listening.assert_called_once()
 
     def test_stop_service(
@@ -81,6 +85,7 @@ class TestVoiceRecorderService:
         mock_text_paster,
         mock_session_manager,
         mock_audio_feedback,
+        mock_console,
     ):
         """Test stopping the service."""
         service = VoiceRecorderService(
@@ -91,12 +96,13 @@ class TestVoiceRecorderService:
             session_manager=mock_session_manager,
             audio_feedback=mock_audio_feedback,
             config=test_config,
+            console=mock_console,
         )
 
         service.start()
         service.stop()
 
-        assert not service.is_running
+        assert not service.is_recording
         mock_hotkey_listener.stop_listening.assert_called_once()
 
     def test_hotkey_press_detection(
@@ -108,6 +114,7 @@ class TestVoiceRecorderService:
         mock_text_paster,
         mock_session_manager,
         mock_audio_feedback,
+        mock_console,
     ):
         """Test hotkey press detection."""
         service = VoiceRecorderService(
@@ -118,6 +125,7 @@ class TestVoiceRecorderService:
             session_manager=mock_session_manager,
             audio_feedback=mock_audio_feedback,
             config=test_config,
+            console=mock_console,
         )
 
         service.start()
@@ -142,6 +150,7 @@ class TestVoiceRecorderService:
         mock_text_paster,
         mock_session_manager,
         mock_audio_feedback,
+        mock_console,
     ):
         """Test hotkey release detection."""
         service = VoiceRecorderService(
@@ -152,6 +161,7 @@ class TestVoiceRecorderService:
             session_manager=mock_session_manager,
             audio_feedback=mock_audio_feedback,
             config=test_config,
+            console=mock_console,
         )
 
         service.start()
@@ -180,6 +190,7 @@ class TestVoiceRecorderService:
         mock_text_paster,
         mock_session_manager,
         mock_audio_feedback,
+        mock_console,
     ):
         """Test complete recording workflow."""
         service = VoiceRecorderService(
@@ -190,6 +201,7 @@ class TestVoiceRecorderService:
             session_manager=mock_session_manager,
             audio_feedback=mock_audio_feedback,
             config=test_config,
+            console=mock_console,
         )
 
         service.start()
@@ -231,6 +243,7 @@ class TestVoiceRecorderService:
         mock_text_paster,
         mock_session_manager,
         mock_audio_feedback,
+        mock_console,
     ):
         """Test error handling during recording."""
         service = VoiceRecorderService(
@@ -241,6 +254,7 @@ class TestVoiceRecorderService:
             session_manager=mock_session_manager,
             audio_feedback=mock_audio_feedback,
             config=test_config,
+            console=mock_console,
         )
 
         service.start()
@@ -268,6 +282,7 @@ class TestVoiceRecorderService:
         mock_text_paster,
         mock_session_manager,
         mock_audio_feedback,
+        mock_console,
     ):
         """Test handling when no transcript is generated."""
         service = VoiceRecorderService(
@@ -278,6 +293,7 @@ class TestVoiceRecorderService:
             session_manager=mock_session_manager,
             audio_feedback=mock_audio_feedback,
             config=test_config,
+            console=mock_console,
         )
 
         service.start()
@@ -310,6 +326,7 @@ class TestVoiceRecorderService:
         mock_text_paster,
         mock_session_manager,
         mock_audio_feedback,
+        mock_console,
     ):
         """Test behavior when auto-paste is disabled."""
         # Disable auto-paste in config
@@ -323,6 +340,7 @@ class TestVoiceRecorderService:
             session_manager=mock_session_manager,
             audio_feedback=mock_audio_feedback,
             config=test_config,
+            console=mock_console,
         )
 
         service.start()

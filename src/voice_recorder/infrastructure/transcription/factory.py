@@ -1,26 +1,22 @@
 """
-Transcription service factory for creating different transcription services.
+Transcription service factory.
 """
 
-from typing import Optional
-
-from ...domain.interfaces import TranscriptionService
+from ...domain.interfaces import TranscriptionServiceInterface, ConsoleInterface
 from ...domain.models import TranscriptionConfig, TranscriptionMode
-from .openai_whisper_service import OpenAITranscriptionService
 from .local_whisper_service import LocalWhisperTranscriptionService
+from .openai_whisper_service import OpenAITranscriptionService
 
 
 class TranscriptionServiceFactory:
-    """Factory for creating transcription services based on configuration."""
+    """Factory for creating transcription services."""
 
     @staticmethod
-    def create_service(config: TranscriptionConfig) -> TranscriptionService:
+    def create_service(config: TranscriptionConfig, console: ConsoleInterface | None = None) -> TranscriptionServiceInterface:
         """Create a transcription service based on configuration."""
-        if config.mode == TranscriptionMode.OPENAI_WHISPER:
-            return OpenAITranscriptionService(config)
-        
-        elif config.mode == TranscriptionMode.LOCAL_WHISPER:
-            return LocalWhisperTranscriptionService(config)
-        
+        if config.mode == TranscriptionMode.LOCAL_WHISPER:
+            return LocalWhisperTranscriptionService(config, console=console)
+        elif config.mode == TranscriptionMode.OPENAI_WHISPER:
+            return OpenAITranscriptionService(config, console=console)
         else:
             raise ValueError(f"Unsupported transcription mode: {config.mode}") 

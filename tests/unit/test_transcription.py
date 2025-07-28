@@ -59,7 +59,7 @@ class TestOpenAITranscriptionService:
             api_key="test_key"
         )
         with patch("builtins.__import__", side_effect=ImportError):
-            with pytest.raises(RuntimeError, match="openai library not available"):
+            with pytest.raises(RuntimeError, match="OpenAI library not available"):
                 OpenAITranscriptionService(config)
 
     def test_init_with_openai(self):
@@ -104,7 +104,7 @@ class TestOpenAITranscriptionService:
 
         # Mock the transcription response
         mock_response = Mock()
-        mock_response.strip.return_value = "Hello world"
+        mock_response.text = "Hello world"
         mock_client.audio.transcriptions.create.return_value = mock_response
 
         with patch("builtins.__import__", return_value=mock_openai):
@@ -155,8 +155,8 @@ class TestOpenAITranscriptionService:
                 f.write(b"test_audio_data")
 
             try:
-                result = service.transcribe(temp_file)
-                assert result is None  # Should return None on error
+                with pytest.raises(RuntimeError, match="OpenAI transcription failed: OpenAI error"):
+                    service.transcribe(temp_file)
             finally:
                 if os.path.exists(temp_file):
                     os.unlink(temp_file)

@@ -40,7 +40,9 @@ class TestPynputHotkeyListener:
             def on_release(key):
                 pass
             
-            listener.start_listening(on_press, on_release)
+            # Set callbacks first
+            listener.set_callbacks(on_press, on_release)
+            listener.start_listening()
             
             assert listener.on_press_callback == on_press
             assert listener.on_release_callback == on_release

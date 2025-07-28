@@ -82,7 +82,6 @@ def start(
             title="Voice Recorder",
             border_style="green"
         ))
-        console.print("Press Ctrl+C to stop the application")
         
         voice_app.start()
         

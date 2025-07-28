@@ -1,79 +1,150 @@
 """
-Domain interfaces (ports) for dependency inversion.
+Domain interfaces for the voice recorder application.
 """
 
-from typing import Optional, Protocol
+from abc import ABC, abstractmethod
+from typing import Any, Protocol
 
-from .models import AudioConfig, RecordingSession, TranscriptionResult
 
+class AudioRecorderInterface(ABC):
+    """Interface for audio recording functionality."""
 
-class AudioRecorder(Protocol):
-    """Interface for audio recording capabilities."""
+    @abstractmethod
+    def start_recording(self, config: Any) -> str:
+        """Start recording audio."""
+        pass
 
-    def start_recording(self, config: AudioConfig) -> str:
-        """Start recording audio and return session ID."""
-        ...
+    @abstractmethod
+    def stop_recording(self, session_id: str) -> str | None:
+        """Stop recording and return file path."""
+        pass
 
-    def stop_recording(self, session_id: str) -> Optional[str]:
-        """Stop recording and return audio file path."""
-        ...
-
+    @abstractmethod
     def is_recording(self, session_id: str) -> bool:
         """Check if recording is active."""
-        ...
+        pass
 
 
-class TranscriptionService(Protocol):
-    """Interface for audio transcription capabilities."""
+class TranscriptionServiceInterface(ABC):
+    """Interface for transcription services."""
 
-    def transcribe(self, audio_file_path: str) -> TranscriptionResult:
-        """Transcribe audio file and return result."""
-        ...
+    @abstractmethod
+    def transcribe(self, audio_file_path: str) -> Any:
+        """Transcribe audio file to text."""
+        pass
 
 
-class HotkeyListener(Protocol):
-    """Interface for hotkey listening capabilities."""
+class HotkeyListenerInterface(ABC):
+    """Interface for hotkey listening functionality."""
 
-    def start_listening(self, on_press, on_release) -> None:
+    @abstractmethod
+    def start_listening(self) -> None:
         """Start listening for hotkey events."""
-        ...
+        pass
 
+    @abstractmethod
     def stop_listening(self) -> None:
         """Stop listening for hotkey events."""
-        ...
+        pass
 
 
-class TextPaster(Protocol):
-    """Interface for text pasting capabilities."""
+class TextPasterInterface(ABC):
+    """Interface for text pasting functionality."""
 
-    def paste_text(self, text: str, position: Optional[str] = None) -> bool:
-        """Paste text at specified position."""
-        ...
+    @abstractmethod
+    def paste_text(self, text: str) -> bool:
+        """Paste text at current cursor position."""
+        pass
 
 
-class SessionManager(Protocol):
-    """Interface for recording session management."""
+class SessionManagerInterface(ABC):
+    """Interface for session management."""
 
-    def create_session(self) -> RecordingSession:
-        """Create a new recording session."""
-        ...
+    @abstractmethod
+    def create_session(self, session_id: str) -> Any:
+        """Create a new session."""
+        pass
 
-    def update_session(self, session: RecordingSession) -> None:
-        """Update session information."""
-        ...
+    @abstractmethod
+    def update_session(self, session_id: str, **kwargs) -> Any:
+        """Update session with new data."""
+        pass
 
-    def get_session(self, session_id: str) -> Optional[RecordingSession]:
+    @abstractmethod
+    def get_session(self, session_id: str) -> Any | None:
         """Get session by ID."""
-        ...
+        pass
+
+    @abstractmethod
+    def delete_session(self, session_id: str) -> bool:
+        """Delete session by ID."""
+        pass
 
 
-class AudioFeedback(Protocol):
+class ConsoleInterface(ABC):
+    """Interface for console output functionality."""
+
+    @abstractmethod
+    def print(self, *args, **kwargs) -> None:
+        """Print to console."""
+        pass
+
+    @abstractmethod
+    def print_panel(self, text: str, title: str = "", style: str = "default") -> None:
+        """Print a formatted panel."""
+        pass
+
+    @abstractmethod
+    def print_error(self, message: str) -> None:
+        """Print error message."""
+        pass
+
+    @abstractmethod
+    def print_success(self, message: str) -> None:
+        """Print success message."""
+        pass
+
+    @abstractmethod
+    def print_warning(self, message: str) -> None:
+        """Print warning message."""
+        pass
+
+
+# Legacy interfaces for backward compatibility
+class AudioRecorder(AudioRecorderInterface):
+    """Legacy interface for audio recording capabilities."""
+    pass
+
+
+class TranscriptionService(TranscriptionServiceInterface):
+    """Legacy interface for audio transcription capabilities."""
+    pass
+
+
+class HotkeyListener(HotkeyListenerInterface):
+    """Legacy interface for hotkey listening capabilities."""
+    pass
+
+
+class TextPaster(TextPasterInterface):
+    """Legacy interface for text pasting capabilities."""
+    pass
+
+
+class SessionManager(SessionManagerInterface):
+    """Legacy interface for recording session management."""
+    pass
+
+
+class AudioFeedback(ABC):
     """Interface for audio feedback capabilities."""
 
+    @abstractmethod
     def play_start_beep(self) -> None:
         """Play start recording beep."""
-        ...
+        pass
 
+    @abstractmethod
     def play_stop_beep(self) -> None:
         """Play stop recording beep."""
-        ...
+        pass
