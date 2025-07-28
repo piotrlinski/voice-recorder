@@ -1,0 +1,92 @@
+# Cursor Rules for Voice Recorder Project
+
+## Project Overview
+This is a professional voice recording application for macOS that transcribes speech using OpenAI's Whisper API and pastes the text at the mouse cursor location. The project follows Clean Architecture principles with dependency injection.
+
+## Architecture
+- **Domain Layer**: Core business logic, Pydantic models, and interfaces (protocols)
+- **Services Layer**: Application-specific business logic and orchestration
+- **Infrastructure Layer**: Implementations of external dependencies (adapters)
+- **API Layer**: Application entry points and dependency injection setup
+
+## Key Technologies
+- **Python 3.8+**: Main programming language
+- **FastAPI/Pydantic v2**: For data validation and models
+- **PyAudio**: Audio recording and playback
+- **OpenAI API**: Speech-to-text transcription
+- **Pynput**: Cross-platform input monitoring
+- **pytest**: Testing framework
+
+## Code Style Guidelines
+1. **Type Safety**: Use strict type hints throughout (`mypy --strict`)
+2. **Clean Architecture**: Follow dependency inversion and separation of concerns
+3. **Dependency Injection**: Inject all dependencies via interfaces
+4. **Error Handling**: Use proper exception handling with meaningful messages
+5. **Documentation**: Include docstrings for all public methods and classes
+
+## Testing Requirements
+- **Unit Tests**: Test individual components in isolation
+- **Integration Tests**: Test complete workflows
+- **Mock Usage**: Use mocks for external dependencies
+- **Coverage**: Aim for high test coverage
+- **Test Structure**: Use `tests/unit/` and `tests/integration/` directories
+
+## File Organization
+```
+src/voice_recorder/
+├── domain/           # Core business logic and models
+├── services/         # Application business logic
+├── infrastructure/   # External dependencies (adapters)
+└── api/             # Application entry points
+```
+
+## Important Files
+- `main.py`: Application entry point
+- `src/voice_recorder/api/app.py`: Dependency injection setup
+- `src/voice_recorder/services/voice_recorder_service.py`: Main business logic
+- `tests/conftest.py`: Shared test fixtures
+- `requirements.txt`: Python dependencies
+- `my.env`: Environment variables (contains API keys)
+
+## Security Considerations
+- Never commit API keys or sensitive data
+- Use environment variables for configuration
+- Validate all input data
+- Handle errors gracefully without exposing internals
+
+## Performance Guidelines
+- Use async/await for I/O operations when appropriate
+- Minimize memory allocations
+- Optimize audio processing for real-time performance
+- Handle resource cleanup properly
+
+## Development Workflow
+1. Write tests first (TDD approach)
+2. Implement features following Clean Architecture
+3. Use type hints and run mypy
+4. Run full test suite before committing
+5. Update documentation as needed
+
+## Common Patterns
+- **Factory Pattern**: For creating application instances
+- **Observer Pattern**: For hotkey event handling
+- **Repository Pattern**: For session management
+- **Strategy Pattern**: For different audio recording methods
+
+## Error Handling
+- Use specific exception types
+- Provide meaningful error messages
+- Log errors appropriately
+- Graceful degradation when possible
+
+## Audio Processing
+- Use PyAudio for cross-platform audio recording
+- Handle audio format conversion properly
+- Manage audio streams and resources
+- Support multiple audio formats (WAV, MP3, etc.)
+
+## Testing Guidelines
+- Mock external dependencies (OpenAI API, audio devices)
+- Test error conditions and edge cases
+- Use fixtures for common test setup
+- Test both success and failure scenarios 

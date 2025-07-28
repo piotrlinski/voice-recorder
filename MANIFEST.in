@@ -1,0 +1,35 @@
+# Include README and license files
+include README.md
+include LICENSE
+include CHANGELOG.md
+
+# Include configuration files
+include pyproject.toml
+include pytest.ini
+
+# Include test files
+recursive-include tests *.py
+
+# Include documentation
+recursive-include docs *.rst *.md
+
+# Include type hints
+include src/voice_recorder/py.typed
+
+# Exclude development files
+global-exclude *.pyc
+global-exclude *.pyo
+global-exclude *.pyd
+global-exclude __pycache__
+global-exclude .git*
+global-exclude .DS_Store
+global-exclude .venv
+global-exclude .env
+global-exclude my.env
+global-exclude *.wav
+global-exclude *.mp3
+global-exclude *.flac
+global-exclude *.m4a
+global-exclude temp_audio_*
+global-exclude test_audio_*
+global-exclude recording_* 
