@@ -70,8 +70,15 @@ def mock_text_paster() -> Mock:
 @pytest.fixture
 def mock_session_manager() -> Mock:
     """Provide a mock session manager."""
+    from datetime import datetime
+    from src.voice_recorder.domain.models import RecordingSession
+    
     mock = Mock()
-    mock.create_session = Mock()
+    mock_session = RecordingSession(
+        id="test_session",
+        start_time=datetime.now()
+    )
+    mock.create_session = Mock(return_value=mock_session)
     mock.update_session = Mock()
     mock.get_session = Mock()
     return mock

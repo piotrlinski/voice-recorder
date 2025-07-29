@@ -73,7 +73,8 @@ class TestVoiceRecorderService:
 
         service.start()
 
-        assert service.is_recording
+        # is_recording should be False initially (only True when recording)
+        assert not service.is_recording
         mock_hotkey_listener.start_listening.assert_called_once()
 
     def test_stop_service(
@@ -132,7 +133,9 @@ class TestVoiceRecorderService:
 
         # Simulate hotkey press
         mock_key = Mock()
-        mock_key.__str__ = Mock(return_value="Key.test")
+        mock_key.char = None
+        mock_key.name = "shift_r"
+        mock_key.__str__ = Mock(return_value="Key.shift_r")
 
         service._on_key_press(mock_key)
 
@@ -168,7 +171,9 @@ class TestVoiceRecorderService:
 
         # Start recording first
         mock_key = Mock()
-        mock_key.__str__ = Mock(return_value="Key.test")
+        mock_key.char = None
+        mock_key.name = "shift_r"
+        mock_key.__str__ = Mock(return_value="Key.shift_r")
         service._on_key_press(mock_key)
 
         # Mock audio recorder to return a file
@@ -208,7 +213,9 @@ class TestVoiceRecorderService:
 
         # Mock key for hotkey detection
         mock_key = Mock()
-        mock_key.__str__ = Mock(return_value="Key.test")
+        mock_key.char = None
+        mock_key.name = "shift_r"
+        mock_key.__str__ = Mock(return_value="Key.shift_r")
 
         # Mock audio recorder
         mock_audio_recorder.start_recording.return_value = "test_session"
@@ -231,8 +238,9 @@ class TestVoiceRecorderService:
         mock_transcription_service.transcribe.assert_called_once_with("test_audio.wav")
         mock_audio_feedback.play_stop_beep.assert_called_once()
 
-        # Verify session state changes
-        assert service.current_session.state == RecordingState.IDLE
+        # Verify session was completed and cleaned up
+        assert service.current_session is None
+        assert not service.is_recording
 
     def test_error_handling_during_recording(
         self,
@@ -261,7 +269,9 @@ class TestVoiceRecorderService:
 
         # Mock key
         mock_key = Mock()
-        mock_key.__str__ = Mock(return_value="Key.test")
+        mock_key.char = None
+        mock_key.name = "shift_r"
+        mock_key.__str__ = Mock(return_value="Key.shift_r")
 
         # Mock audio recorder to raise an error
         mock_audio_recorder.start_recording.side_effect = Exception("Recording failed")
@@ -300,7 +310,9 @@ class TestVoiceRecorderService:
 
         # Mock key
         mock_key = Mock()
-        mock_key.__str__ = Mock(return_value="Key.test")
+        mock_key.char = None
+        mock_key.name = "shift_r"
+        mock_key.__str__ = Mock(return_value="Key.shift_r")
 
         # Mock audio recorder
         mock_audio_recorder.start_recording.return_value = "test_session"
@@ -347,7 +359,9 @@ class TestVoiceRecorderService:
 
         # Mock key
         mock_key = Mock()
-        mock_key.__str__ = Mock(return_value="Key.test")
+        mock_key.char = None
+        mock_key.name = "shift_r"
+        mock_key.__str__ = Mock(return_value="Key.shift_r")
 
         # Mock audio recorder
         mock_audio_recorder.start_recording.return_value = "test_session"
