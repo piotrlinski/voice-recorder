@@ -7,9 +7,8 @@ A professional voice recording application for macOS that transcribes English sp
 - **Hotkey Recording**: Press and hold the Shift key to record voice
 - **Multiple Transcription Options**:
   - **OpenAI Whisper**: Cloud-based transcription (requires API key)
-  - **Local Whisper**: Offline transcription using Whisper.cpp
-  - **Ollama Whisper**: Local transcription using Ollama + Whisper
-  - **Ollama Models**: Use any Ollama model (Llama, DeepSeek, etc.)
+  - **Local Whisper**: Offline transcription using OpenAI Whisper
+- **English Language Support**: Optimized for English speech transcription
 - **Smart Text Pasting**: Automatically pastes transcribed text at mouse cursor location
 - **Background Service**: Runs continuously in the background
 - **Audio Feedback**: Provides audio cues for recording start/stop
@@ -27,10 +26,8 @@ src/voice_recorder/
 │   └── transcription/  # Transcription services module
 │       ├── __init__.py
 │       ├── factory.py
-│       ├── openai_service.py
+│       ├── openai_whisper_service.py
 │       ├── local_whisper_service.py
-│       ├── ollama_whisper_service.py
-│       ├── ollama_model_service.py
 │       └── mock_service.py
 └── api/             # Application entry points
 ```
@@ -74,23 +71,29 @@ src/voice_recorder/
    pip install -e ".[dev,test]"
    ```
 
-4. **Install PortAudio (required for PyAudio):**
+4. **Install system dependencies:**
    ```bash
+   # Install PortAudio (required for PyAudio)
    brew install portaudio
+   
+   # Install ffmpeg (required for local Whisper transcription)
+   brew install ffmpeg
    ```
 
-5. **Configure transcription mode:**
-   
-   **Option A: Interactive configuration**
+5. **Initialize configuration:**
    ```bash
-   python configure_transcription.py
+   voice-recorder init
    ```
    
-   **Option B: Manual configuration**
-   Create a `my.env` file in the project root:
-   ```
-   OPENAI_API_KEY=your_openai_api_key_here  # For OpenAI mode
-   ```
+   **Note**: The application will automatically start the configuration setup on first run if no configuration file exists.
+   
+   This will guide you through an interactive setup process:
+   - **Transcription mode** (OpenAI Whisper or Local Whisper)
+   - **Model selection** (for Local Whisper: tiny, base, small, medium, large)
+   - **Audio settings** (sample rate, channels, chunk size)
+   - **Hotkey configuration** (recording trigger key)
+   - **Sound feedback settings** (enabled/disabled, volume, duration)
+   - **General preferences** (auto-paste, temp directory)
 
 ### Alternative Installation Methods
 
@@ -102,26 +105,96 @@ pip install voice-recorder
 **Using the entry point:**
 ```bash
 # After installation, you can run:
-voice-recorder
+voice-recorder start
 ```
 
 ## Usage
 
+### CLI Commands
+
+The application provides a comprehensive CLI interface:
+
+#### Initialize Configuration
+```bash
+# Interactive configuration setup
+voice-recorder init
+
+# Initialize with custom config directory
+voice-recorder init --config-dir ~/custom_config
+
+# Force overwrite existing configuration
+voice-recorder init --force
+```
+
+**Interactive Configuration Features:**
+- **Step-by-step setup** with clear prompts and descriptions
+- **Model selection** for Local Whisper with size and accuracy information
+- **Audio configuration** with sensible defaults
+- **Sound feedback customization** with volume and duration controls
+
+#### Start the Application
+```bash
+# Start with default configuration
+voice-recorder start
+
+# Start with custom config file
+voice-recorder start --config ~/.voicerecorder/config.json
+
+# Start with custom environment file
+voice-recorder start --env-file ~/.custom_env
+
+# Start with verbose output
+voice-recorder start --verbose
+```
+
+**First Time Setup**: If no configuration file exists, the application will automatically start the interactive configuration setup before launching.
+
+#### Manage Configuration
+```bash
+# Show current configuration
+voice-recorder config --show
+
+# Edit configuration in your default editor
+voice-recorder config --edit
+voice-recorder config --edit --editor vim
+voice-recorder config --edit --editor code
+
+# Reset to defaults
+voice-recorder config --reset
+
+# Quick configuration changes
+voice-recorder set transcription.mode local_whisper
+voice-recorder set sound.volume 0.2
+voice-recorder set hotkey.key ctrl+shift
+
+# Show application status
+voice-recorder status
+
+# Manage temporary files
+voice-recorder purge --dry-run  # Preview files to be deleted
+voice-recorder purge --force     # Delete without confirmation
+```
+
 ### Running the Application
 
-**Method 1: Using the installed package**
+**Method 1: Using the CLI (Recommended)**
+```bash
+voice-recorder start
+```
+
+**Method 2: Using the installed package**
 ```bash
 voice-recorder
 ```
 
-**Method 2: Python module execution**
+**Method 3: Python module execution**
 ```bash
-python -m voice_recorder.api.app
+python -m voice_recorder.cli.main start
 ```
 
-**Method 3: Direct execution (development)**
+**Method 4: Direct execution (development)**
 ```bash
-python -c "import sys; sys.path.insert(0, 'src'); from voice_recorder.api.app import main; main()"
+python -c "import sys; sys.path.insert(0, 'src'); from voice_recorder.cli.main import app; app()"
 ```
 
 The application will start and listen for the Shift key. When you press and hold Shift, it will:
@@ -144,50 +217,113 @@ The application supports multiple transcription modes to suit different needs:
 - **Note**: Uses OpenAI API v1.0+ (latest version)
 
 #### 2. Local Whisper (Offline)
-- **Pros**: Works offline, no API costs
+- **Pros**: Works offline, no API costs, optimized for CPU
 - **Cons**: Requires model download, more setup
 - **Setup**: 
   ```bash
-  pip install whisper-cpp-python
+  pip install openai-whisper
   # Models are downloaded automatically
   ```
-
-#### 3. Ollama Whisper (Local)
-- **Pros**: Easy setup, good performance, official Python client
-- **Cons**: Requires Ollama installation
-- **Setup**:
-  ```bash
-  brew install ollama
-  ollama pull whisper
-  pip install ollama
-  ```
-
-#### 4. Ollama Custom Models (Local)
-- **Pros**: Use any model (Llama, DeepSeek, etc.), official Python client
-- **Cons**: May be less accurate for transcription
-- **Setup**:
-  ```bash
-  brew install ollama
-  ollama pull llama3.2  # or any other model
-  pip install ollama
-  ```
+- **Note**: Automatically uses FP32 precision to avoid CPU compatibility warnings
 
 ### Configuration
 
-**Interactive Configuration:**
+The application uses an **INI-based configuration system** stored in `~/.voicerecorder/config.ini`. INI files are more readable and user-friendly than JSON.
+
+**Initialize Configuration:**
 ```bash
-python configure_transcription.py
+voice-recorder init
 ```
 
-**Manual Configuration:**
-You can customize the application behavior by modifying the configuration in `src/voice_recorder/api/app.py`:
+**Show Current Configuration:**
+```bash
+voice-recorder config --show
+```
 
-- **Transcription Mode**: Choose between OpenAI, Local Whisper, Ollama
+**Edit Configuration:**
+```bash
+voice-recorder config --edit
+voice-recorder config --edit --editor vim
+voice-recorder config --edit --editor code
+```
+
+**Quick Configuration Changes:**
+```bash
+voice-recorder set transcription.mode local_whisper
+voice-recorder set sound.volume 0.2
+voice-recorder set hotkey.key ctrl+shift
+```
+
+**Convert to JSON:**
+```bash
+voice-recorder convert json  # Convert INI to JSON for backup
+```
+
+**Configuration Options:**
+- **Transcription Mode**: Choose between OpenAI, Local Whisper
 - **Model Selection**: Specify which model to use
 - **Hotkey**: Change the trigger key (default: Shift)
 - **Audio Settings**: Sample rate, channels, format
 - **Auto-paste**: Enable/disable automatic text pasting
-- **Audio Feedback**: Enable/disable beep sounds
+- **Sound Feedback**: Enable/disable and customize recording sounds
+- **Temp Directory**: Customize temporary file storage location
+
+**Configuration Examples:**
+See the `examples/` directory for sample INI configuration files:
+- `config_openai_whisper.ini` - OpenAI Whisper setup
+- `config_local_whisper.ini` - Local Whisper setup
+- `config_quiet.ini` - Quiet operation
+- `config_no_sound.ini` - Silent operation
+- `config_high_quality.ini` - High-quality audio settings
+
+**Note:** The application now uses INI format exclusively. JSON configurations can be converted using `voice-recorder convert json`.
+
+### Environment Variables
+
+The application supports custom environment files for API keys and other sensitive configuration:
+
+**Default Behavior:**
+- Automatically loads `.env` file from the current directory
+- Falls back to system environment variables
+
+**Custom Environment File:**
+```bash
+# Use a custom .env file
+voice-recorder start --env-file ~/.my_custom_env
+
+# Use a different environment file for testing
+voice-recorder start --env-file ~/.test_env
+```
+
+**Environment Variables:**
+- `OPENAI_API_KEY`: Required for OpenAI Whisper mode
+
+### Sound Configuration
+
+The application provides customizable audio feedback when recording starts and stops:
+
+**Sound Types:**
+- **Tone**: High-quality ascending/descending tones (default)
+- **Beep**: Simple system beep sounds
+- **None**: No audio feedback
+
+**Sound Settings:**
+- **Volume**: Adjustable from 0.0 to 1.0 (default: 0.15)
+- **Frequency Range**: Customizable start/end frequencies (default: 800Hz-1200Hz)
+- **Duration**: Adjustable sound duration (default: 0.3 seconds)
+- **Enabled/Disabled**: Toggle sound feedback on/off
+
+**Default Configuration:**
+- **Start Sound**: Ascending tone (800Hz → 1200Hz)
+- **Stop Sound**: Descending tone (1200Hz → 800Hz)
+- **Volume**: 15% (quiet and pleasant)
+- **Duration**: 0.3 seconds
+
+**Configuration:**
+- Sound feedback is enabled by default
+- Customize via CLI: `voice-recorder config --edit`
+- Uses PyAudio for high-quality audio playback
+- Falls back to system beep if PyAudio fails
 
 ## Testing
 
@@ -261,85 +397,3 @@ python -m pytest tests/unit/test_audio_recorder.py::TestPyAudioRecorder::test_in
 # Run tests with coverage
 python -m pytest tests/ --cov=src/voice_recorder --cov-report=html
 ```
-
-## Development
-
-### Project Structure
-
-```
-my-voice-recorder/
-├── src/voice_recorder/           # Main application code
-│   ├── domain/                   # Core business logic
-│   │   ├── models.py            # Pydantic models
-│   │   └── interfaces.py        # Protocol definitions
-│   ├── services/                 # Application services
-│   │   └── voice_recorder_service.py
-│   ├── infrastructure/           # External adapters
-│   │   ├── audio_recorder.py    # PyAudio implementation
-│   │   ├── transcription.py     # OpenAI integration
-│   │   ├── hotkey.py           # Pynput implementation
-│   │   ├── text_paster.py      # macOS text pasting
-│   │   ├── session_manager.py  # Session tracking
-│   │   └── audio_feedback.py   # System audio
-│   └── api/                     # Application entry points
-│       └── app.py              # Dependency injection setup
-├── tests/                       # Test suite
-├── main.py                      # Application entry point
-├── requirements.txt             # Python dependencies
-├── run_tests.py                # Test runner script
-└── README.md                   # This file
-```
-
-### Adding New Features
-
-1. **Domain Layer**: Define models and interfaces in `domain/`
-2. **Infrastructure Layer**: Implement adapters in `infrastructure/`
-3. **Service Layer**: Add business logic in `services/`
-4. **Tests**: Add corresponding unit and integration tests
-
-### Code Quality
-
-- **Type Safety**: All code uses strict type hints
-- **Clean Architecture**: Clear separation of concerns
-- **Dependency Injection**: All dependencies are injected
-- **Comprehensive Testing**: High test coverage with mocks
-
-## Troubleshooting
-
-### Common Issues
-
-1. **"PyAudio not available"**
-   - Install PortAudio: `brew install portaudio`
-   - Reinstall PyAudio: `pip install --force-reinstall pyaudio`
-
-2. **"OpenAI API key not found"**
-   - Ensure `my.env` file exists with `OPENAI_API_KEY=your_key`
-
-3. **"Permission denied" for audio recording**
-   - Grant microphone permissions to Terminal/IDE in System Preferences
-
-4. **Text not pasting at cursor location**
-   - Ensure the target application supports text input
-   - Check that the application has focus
-
-### Debug Mode
-
-Run with verbose logging:
-```bash
-python main.py --debug
-```
-
-## Dependencies
-
-- **openai**: OpenAI API client
-- **python-dotenv**: Environment variable management
-- **pynput**: Cross-platform input monitoring
-- **pyaudio**: Audio recording and playback
-- **pydantic**: Data validation and settings
-- **pytest**: Testing framework
-- **pytest-mock**: Mocking utilities
-- **pytest-cov**: Coverage reporting
-
-## License
-
-This project is licensed under the MIT License. 

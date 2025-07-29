@@ -25,7 +25,6 @@ class TestVoiceRecorderApp:
         config = ApplicationConfig()
         app = VoiceRecorderApp(config)
         assert app.config == config
-        assert app.openai_api_key == "test-key"
 
     @patch.dict(os.environ, {"OPENAI_API_KEY": "test-key"})
     @patch('src.voice_recorder.infrastructure.transcription.factory.TranscriptionServiceFactory.create_service')
@@ -36,14 +35,19 @@ class TestVoiceRecorderApp:
         
         app = VoiceRecorderApp()
         assert isinstance(app.config, ApplicationConfig)
-        assert app.openai_api_key == "test-key"
 
     @patch('src.voice_recorder.api.app.load_dotenv')
-    def test_init_without_api_key(self, mock_load_dotenv):
+    @patch('src.voice_recorder.infrastructure.transcription.factory.TranscriptionServiceFactory.create_service')
+    def test_init_without_api_key(self, mock_create_service, mock_load_dotenv):
         """Test VoiceRecorderApp initialization without API key."""
+        mock_service = Mock()
+        mock_create_service.return_value = mock_service
+        
         with patch.dict(os.environ, {}, clear=True):
-            with pytest.raises(RuntimeError, match="OPENAI_API_KEY not set"):
-                VoiceRecorderApp()
+            # The app should still initialize even without API key
+            # since it uses the factory pattern now
+            app = VoiceRecorderApp()
+            assert isinstance(app.config, ApplicationConfig)
 
     @patch.dict(os.environ, {"OPENAI_API_KEY": "test-key"})
     @patch('src.voice_recorder.infrastructure.transcription.factory.TranscriptionServiceFactory.create_service')

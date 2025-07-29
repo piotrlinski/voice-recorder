@@ -21,7 +21,7 @@ from src.voice_recorder.domain.models import (
 def test_config() -> ApplicationConfig:
     """Provide a test application configuration."""
     return ApplicationConfig(
-        hotkey_config=HotkeyConfig(key="test", description="Test hotkey"),
+        hotkey_config=HotkeyConfig(key="shift_r", description="Right Shift key for recording"),
         audio_config=AudioConfig(sample_rate=16000, channels=1),
         auto_paste=False,
         beep_feedback=True,
@@ -70,8 +70,15 @@ def mock_text_paster() -> Mock:
 @pytest.fixture
 def mock_session_manager() -> Mock:
     """Provide a mock session manager."""
+    from datetime import datetime
+    from src.voice_recorder.domain.models import RecordingSession
+    
     mock = Mock()
-    mock.create_session = Mock()
+    mock_session = RecordingSession(
+        id="test_session",
+        start_time=datetime.now()
+    )
+    mock.create_session = Mock(return_value=mock_session)
     mock.update_session = Mock()
     mock.get_session = Mock()
     return mock
@@ -83,6 +90,19 @@ def mock_audio_feedback() -> Mock:
     mock = Mock()
     mock.play_start_beep = Mock()
     mock.play_stop_beep = Mock()
+    return mock
+
+
+@pytest.fixture
+def mock_console() -> Mock:
+    """Provide a mock console interface."""
+    mock = Mock()
+    # Mock all the ConsoleInterface methods
+    mock.print = Mock()
+    mock.print_panel = Mock()
+    mock.print_error = Mock()
+    mock.print_success = Mock()
+    mock.print_warning = Mock()
     return mock
 
 

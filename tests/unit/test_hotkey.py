@@ -6,7 +6,7 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from src.voice_recorder.infrastructure.hotkey import PynputHotkeyListener, MockHotkeyListener
+from src.voice_recorder.infrastructure.hotkey import PynputHotkeyListener
 
 
 class TestPynputHotkeyListener:
@@ -40,7 +40,9 @@ class TestPynputHotkeyListener:
             def on_release(key):
                 pass
             
-            listener.start_listening(on_press, on_release)
+            # Set callbacks first
+            listener.set_callbacks(on_press, on_release)
+            listener.start_listening()
             
             assert listener.on_press_callback == on_press
             assert listener.on_release_callback == on_release
@@ -89,6 +91,35 @@ class TestPynputHotkeyListener:
             listener._on_release(test_key)
             
             mock_callback.assert_called_once_with(test_key)
+
+
+class MockHotkeyListener:
+    """Mock hotkey listener for testing."""
+
+    def __init__(self):
+        self.is_listening = False
+        self.on_press_callback = None
+        self.on_release_callback = None
+
+    def start_listening(self, on_press, on_release):
+        """Start listening for hotkey events."""
+        self.is_listening = True
+        self.on_press_callback = on_press
+        self.on_release_callback = on_release
+
+    def stop_listening(self):
+        """Stop listening for hotkey events."""
+        self.is_listening = False
+
+    def simulate_key_press(self, key):
+        """Simulate a key press event."""
+        if self.on_press_callback:
+            self.on_press_callback(key)
+
+    def simulate_key_release(self, key):
+        """Simulate a key release event."""
+        if self.on_release_callback:
+            self.on_release_callback(key)
 
 
 class TestMockHotkeyListener:

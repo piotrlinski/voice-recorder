@@ -49,37 +49,7 @@ class InMemorySessionManager:
         self.sessions.clear()
 
 
-class MockSessionManager:
-    """Mock session manager for testing."""
 
-    def __init__(self):
-        self.sessions = []
-        self.create_count = 0
-        self.update_count = 0
 
-    def create_session(self) -> RecordingSession:
-        """Create a mock session."""
-        self.create_count += 1
-        session = RecordingSession(
-            id=f"mock_session_{self.create_count}",
-            start_time=datetime.now(),
-            state=RecordingState.IDLE,
-        )
-        self.sessions.append(session)
-        return session
 
-    def update_session(self, session: RecordingSession) -> None:
-        """Update mock session."""
-        self.update_count += 1
-        # Find and update the session
-        for i, existing_session in enumerate(self.sessions):
-            if existing_session.id == session.id:
-                self.sessions[i] = session
-                break
 
-    def get_session(self, session_id: str) -> Optional[RecordingSession]:
-        """Get mock session by ID."""
-        for session in self.sessions:
-            if session.id == session_id:
-                return session
-        return None

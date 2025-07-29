@@ -1,14 +1,20 @@
 """
-Hotkey listener infrastructure implementations.
+Hotkey listening infrastructure implementations.
 """
 
-from typing import Any, Callable
+import os
+from typing import Any, Callable, Optional
+
+from ..domain.interfaces import HotkeyListenerInterface, ConsoleInterface
 
 
-class PynputHotkeyListener:
+class PynputHotkeyListener(HotkeyListenerInterface):
     """Pynput-based hotkey listener implementation."""
 
-    def __init__(self):
+    def __init__(self, console: ConsoleInterface | None = None):
+        """Initialize Pynput hotkey listener."""
+        self.console = console
+        self.keyboard = None
         self.listener = None
         self.on_press_callback = None
         self.on_release_callback = None
@@ -16,26 +22,31 @@ class PynputHotkeyListener:
             from pynput import keyboard
 
             self.keyboard = keyboard
-            print("Pynput keyboard listener initialized")
+            
+            if self.console:
+                self.console.print_success("✅ Pynput keyboard listener initialized")
         except ImportError:
+            if self.console:
+                self.console.print_error("Pynput library not available - Install with: pip install pynput")
             raise RuntimeError("Pynput library not available")
         except Exception as e:
+            if self.console:
+                self.console.print_error(f"Pynput initialization failed: {e}")
             raise RuntimeError(f"Pynput initialization failed: {e}")
 
-    def start_listening(
-        self, on_press: Callable[[Any], None], on_release: Callable[[Any], None]
-    ) -> None:
+    def start_listening(self) -> None:
         """Start listening for hotkey events."""
-        self.on_press_callback = on_press
-        self.on_release_callback = on_release
         try:
             self.listener = self.keyboard.Listener(
                 on_press=self._on_press, on_release=self._on_release
             )
             self.listener.start()
-            print("Hotkey listener started")
+            
+            if self.console:
+                self.console.print_success("🎧 Hotkey listener started")
         except Exception as e:
-            print(f"Failed to start hotkey listener: {e}")
+            if self.console:
+                self.console.print_error(f"Failed to start hotkey listener: {e}")
             raise
 
     def stop_listening(self) -> None:
@@ -43,53 +54,35 @@ class PynputHotkeyListener:
         if self.listener:
             self.listener.stop()
             self.listener = None
-            print("Hotkey listener stopped")
+            
+            if self.console:
+                self.console.print_warning("🛑 Hotkey listener stopped")
 
     def _on_press(self, key):
-        """Internal key press handler."""
-        if self.on_press_callback:
-            try:
+        """Handle key press events."""
+        try:
+            if self.on_press_callback:
                 self.on_press_callback(key)
-            except Exception as e:
-                print(f"Error in key press handler: {e}")
+        except Exception as e:
+            if self.console:
+                self.console.print_error(f"Key press handler error: {e}")
 
     def _on_release(self, key):
-        """Internal key release handler."""
-        if self.on_release_callback:
-            try:
+        """Handle key release events."""
+        try:
+            if self.on_release_callback:
                 self.on_release_callback(key)
-            except Exception as e:
-                print(f"Error in key release handler: {e}")
+        except Exception as e:
+            if self.console:
+                self.console.print_error(f"Key release handler error: {e}")
 
-
-class MockHotkeyListener:
-    """Mock hotkey listener for testing."""
-
-    def __init__(self):
-        self.is_listening = False
-        self.on_press_callback = None
-        self.on_release_callback = None
-
-    def start_listening(
-        self, on_press: Callable[[Any], None], on_release: Callable[[Any], None]
-    ) -> None:
-        """Start mock listening."""
-        self.is_listening = True
+    def set_callbacks(self, on_press: Callable[[Any], None], on_release: Callable[[Any], None]) -> None:
+        """Set the callback functions for key events."""
         self.on_press_callback = on_press
         self.on_release_callback = on_release
-        print("Mock hotkey listener started")
 
-    def stop_listening(self) -> None:
-        """Stop mock listening."""
-        self.is_listening = False
-        print("Mock hotkey listener stopped")
 
-    def simulate_key_press(self, key):
-        """Simulate a key press for testing."""
-        if self.is_listening and self.on_press_callback:
-            self.on_press_callback(key)
 
-    def simulate_key_release(self, key):
-        """Simulate a key release for testing."""
-        if self.is_listening and self.on_release_callback:
-            self.on_release_callback(key)
+
+
+

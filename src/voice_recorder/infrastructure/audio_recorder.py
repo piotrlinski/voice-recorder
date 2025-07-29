@@ -1,37 +1,41 @@
 """
-Audio recorder infrastructure implementations.
+Audio recording infrastructure implementations.
 """
 
+import os
 import tempfile
-import wave
 from typing import Any, Dict, Optional
 
+from ..domain.interfaces import AudioRecorderInterface, ConsoleInterface
 from ..domain.models import AudioConfig
 
 
-class PyAudioRecorder:
+class PyAudioRecorder(AudioRecorderInterface):
     """PyAudio-based audio recorder implementation."""
 
-    def __init__(self):
+    def __init__(self, console: ConsoleInterface | None = None):
+        """Initialize PyAudio recorder."""
+        self.console = console
         self.pyaudio_available = False
         self.pyaudio: Optional[Any] = None
         self.pa_continue: Optional[Any] = None
         self.pa_int16: Optional[Any] = None
         self.audio_streams: Dict[str, Any] = {}
         self.audio_frames: Dict[str, list] = {}
+        
         # Try to initialize PyAudio
         try:
             import pyaudio
-
             self.pyaudio = pyaudio.PyAudio()
             self.pa_continue = pyaudio.paContinue
             self.pa_int16 = pyaudio.paInt16
             self.pyaudio_available = True
-            print("PyAudio initialized successfully")
         except ImportError:
-            print("PyAudio not available")
+            if self.console:
+                self.console.print_error("PyAudio not available - audio recording disabled")
         except Exception as e:
-            print(f"PyAudio initialization failed: {e}")
+            if self.console:
+                self.console.print_error(f"PyAudio initialization failed: {e}")
 
     def _create_audio_callback(self, session_id: str):
         """Create a proper audio callback closure."""
@@ -43,7 +47,8 @@ class PyAudioRecorder:
                 if session_id in self.audio_frames:
                     self.audio_frames[session_id].append(in_data)
             except Exception as e:
-                print(f"Audio callback error: {e}")
+                if self.console:
+                    self.console.print_error(f"⚠️ Audio callback error: {e}")
             return (in_data, self.pa_continue)
 
         return audio_callback
@@ -69,10 +74,14 @@ class PyAudioRecorder:
             )
             self.audio_streams[session_id] = stream
             stream.start_stream()
-            print(f"PyAudio recording started (Session: {session_id})")
+            
+            if self.console:
+                self.console.print_success(f"🎙️ PyAudio recording started (Session: {session_id})")
+            
             return session_id
         except Exception as e:
-            print(f"PyAudio recording failed: {e}")
+            if self.console:
+                self.console.print_error(f"PyAudio recording failed: {e}")
             raise
 
     def stop_recording(self, session_id: str) -> Optional[str]:
@@ -86,29 +95,43 @@ class PyAudioRecorder:
                 stream.stop_stream()
             if hasattr(stream, "close"):
                 stream.close()
-            # Remove from tracking
+            
+            # Remove from active streams
             del self.audio_streams[session_id]
-            # Save audio frames to file
-            if session_id in self.audio_frames and self.audio_frames[session_id]:
-                temp_file = tempfile.NamedTemporaryFile(suffix=".wav", delete=False)
-                temp_file.close()
-                with wave.open(temp_file.name, "wb") as wf:
-                    wf.setnchannels(1)  # Mono
-                    if self.pyaudio and self.pa_int16:
-                        wf.setsampwidth(self.pyaudio.get_sample_size(self.pa_int16))
-                    else:
-                        wf.setsampwidth(2)  # Default for 16-bit audio
-                    wf.setframerate(16000)
-                    wf.writeframes(b"".join(self.audio_frames[session_id]))
-                # Clean up frames
-                del self.audio_frames[session_id]
-                print(f"PyAudio recording stopped (Session: {session_id})")
-                return temp_file.name
-            else:
-                print(f"No audio frames recorded for session: {session_id}")
+            
+            # Get audio frames
+            audio_frames = self.audio_frames.get(session_id, [])
+            if not audio_frames:
+                if self.console:
+                    self.console.print_warning("No audio frames recorded")
                 return None
+            
+            # Create temporary file
+            temp_file = tempfile.NamedTemporaryFile(
+                suffix=".wav", delete=False, dir=tempfile.gettempdir()
+            )
+            temp_file_path = temp_file.name
+            temp_file.close()
+            
+            # Save audio to file
+            import wave
+            with wave.open(temp_file_path, 'wb') as wav_file:
+                wav_file.setnchannels(1)  # Mono
+                wav_file.setsampwidth(self.pyaudio.get_sample_size(self.pa_int16))
+                wav_file.setframerate(16000)  # Default sample rate
+                wav_file.writeframes(b''.join(audio_frames))
+            
+            # Clean up audio frames
+            if session_id in self.audio_frames:
+                del self.audio_frames[session_id]
+            
+            if self.console:
+                self.console.print_success(f"Recording saved to: {temp_file_path}")
+            
+            return temp_file_path
         except Exception as e:
-            print(f"PyAudio stop recording failed: {e}")
+            if self.console:
+                self.console.print_error(f"Failed to save recording: {e}")
             return None
 
     def is_recording(self, session_id: str) -> bool:

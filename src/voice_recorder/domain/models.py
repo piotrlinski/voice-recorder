@@ -15,6 +15,7 @@ class RecordingState(str, Enum):
     IDLE = "idle"
     RECORDING = "recording"
     PROCESSING = "processing"
+    COMPLETED = "completed"
     ERROR = "error"
 
 
@@ -31,8 +32,14 @@ class TranscriptionMode(str, Enum):
 
     OPENAI_WHISPER = "openai_whisper"
     LOCAL_WHISPER = "local_whisper"
-    OLLAMA_WHISPER = "ollama_whisper"
-    OLLAMA_MODEL = "ollama_model"
+
+
+class SoundType(str, Enum):
+    """Sound type enumeration."""
+
+    TONE = "tone"
+    BEEP = "beep"
+    NONE = "none"
 
 
 class AudioConfig(BaseModel):
@@ -53,15 +60,11 @@ class TranscriptionConfig(BaseModel):
     )
     model_name: str = Field(
         default="whisper-1", 
-        description="Model name (OpenAI model or Ollama model)"
+        description="Model name (OpenAI model or local Whisper model)"
     )
     api_key: Optional[str] = Field(
         default=None, 
         description="API key for OpenAI (if using OpenAI mode)"
-    )
-    ollama_base_url: str = Field(
-        default="http://localhost:11434", 
-        description="Ollama server URL"
     )
 
 
@@ -94,6 +97,17 @@ class TranscriptionResult(BaseModel):
     duration: Optional[float] = Field(default=None, description="Audio duration")
 
 
+class SoundConfig(BaseModel):
+    """Sound feedback configuration."""
+
+    enabled: bool = Field(default=True, description="Enable audio feedback")
+    sound_type: SoundType = Field(default=SoundType.TONE, description="Type of sound to play")
+    volume: float = Field(default=0.15, ge=0.0, le=1.0, description="Sound volume (0.0 to 1.0)")
+    start_frequency: float = Field(default=800.0, description="Start frequency for tone (Hz)")
+    end_frequency: float = Field(default=1200.0, description="End frequency for tone (Hz)")
+    duration: float = Field(default=0.3, description="Sound duration in seconds")
+
+
 class HotkeyConfig(BaseModel):
     """Hotkey configuration."""
 
@@ -108,10 +122,11 @@ class ApplicationConfig(BaseModel):
     audio_config: AudioConfig = Field(default_factory=AudioConfig)
     transcription_config: TranscriptionConfig = Field(default_factory=TranscriptionConfig)
     hotkey_config: HotkeyConfig = Field(
-        default=HotkeyConfig(key="shift", description="Shift key for recording")
+        default=HotkeyConfig(key="shift_r", description="Right Shift key for recording")
     )
+    sound_config: SoundConfig = Field(default_factory=SoundConfig)
     auto_paste: bool = Field(default=True, description="Auto-paste transcribed text")
     beep_feedback: bool = Field(
-        default=True, description="Audio feedback for recording"
+        default=True, description="Audio feedback for recording (deprecated, use sound_config)"
     )
     temp_directory: str = Field(default="/tmp", description="Temporary file directory")
