@@ -12,7 +12,7 @@ import pytest
 from src.voice_recorder.domain.models import (
     ApplicationConfig,
     AudioConfig,
-    HotkeyConfig,
+    ControlsConfig,
     TranscriptionResult,
 )
 
@@ -21,11 +21,8 @@ from src.voice_recorder.domain.models import (
 def test_config() -> ApplicationConfig:
     """Provide a test application configuration."""
     return ApplicationConfig(
-        hotkey_config=HotkeyConfig(key="shift_r", description="Right Shift key for recording"),
-        audio_config=AudioConfig(sample_rate=16000, channels=1),
-        auto_paste=False,
-        beep_feedback=True,
-        temp_directory="/tmp",
+        controls=ControlsConfig(basic_key="shift_r", enhanced_key="ctrl_l"),
+        audio=AudioConfig(sample_rate=16000, channels=1),
     )
 
 
@@ -72,12 +69,9 @@ def mock_session_manager() -> Mock:
     """Provide a mock session manager."""
     from datetime import datetime
     from src.voice_recorder.domain.models import RecordingSession
-    
+
     mock = Mock()
-    mock_session = RecordingSession(
-        id="test_session",
-        start_time=datetime.now()
-    )
+    mock_session = RecordingSession(id="test_session", start_time=datetime.now())
     mock.create_session = Mock(return_value=mock_session)
     mock.update_session = Mock()
     mock.get_session = Mock()
@@ -98,11 +92,10 @@ def mock_console() -> Mock:
     """Provide a mock console interface."""
     mock = Mock()
     # Mock all the ConsoleInterface methods
-    mock.print = Mock()
-    mock.print_panel = Mock()
-    mock.print_error = Mock()
-    mock.print_success = Mock()
-    mock.print_warning = Mock()
+    mock.info = Mock()
+    mock.error = Mock()
+    mock.warning = Mock()
+    mock.debug = Mock()
     return mock
 
 

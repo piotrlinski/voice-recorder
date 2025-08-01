@@ -1,17 +1,36 @@
 """
-Transcription services module.
+Transcription module for voice recorder.
 
-This module provides various transcription service implementations:
-- OpenAI Whisper (cloud-based)
-- Local Whisper (offline using OpenAI Whisper)
+This module provides transcription services using various providers and architectures.
 """
 
+# Base classes
+from .base.base_transcription_service import BaseTranscriptionService
+from .base.base_enhancement_service import BaseEnhancementService
+from .base.base_enhanced_service import BaseEnhancedService
+
+# Factory
 from .factory import TranscriptionServiceFactory
-from .openai_whisper_service import OpenAITranscriptionService
-from .local_whisper_service import LocalWhisperTranscriptionService
+
+# Providers
+from .providers.whisper import OpenAIWhisperProvider, LocalWhisperProvider
+from .providers.llm import OpenAIGPTProvider, OllamaProvider
+from .providers.composite import OpenAIEnhancedService, LocalEnhancedService
 
 __all__ = [
+    # Factory
     "TranscriptionServiceFactory",
-    "OpenAITranscriptionService",
-    "LocalWhisperTranscriptionService",
-] 
+    
+    # Base classes
+    "BaseTranscriptionService",
+    "BaseEnhancementService", 
+    "BaseEnhancedService",
+    
+    # Providers
+    "OpenAIWhisperProvider",
+    "LocalWhisperProvider",
+    "OpenAIGPTProvider",
+    "OllamaProvider",
+    "OpenAIEnhancedService",
+    "LocalEnhancedService",
+]

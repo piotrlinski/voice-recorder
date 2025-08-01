@@ -1,5 +1,8 @@
-"""CLI package for voice recorder application."""
+"""
+CLI tools and utilities for Voice Recorder.
+"""
 
-from .main import app
+from .config_wizard import ConfigurationWizard
+from .commands import CLICommands
 
-__all__ = ["app"] 
+__all__ = ["ConfigurationWizard", "CLICommands"]

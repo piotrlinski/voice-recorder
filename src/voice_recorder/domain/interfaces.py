@@ -34,6 +34,20 @@ class TranscriptionServiceInterface(ABC):
         pass
 
 
+class EnhancedTranscriptionServiceInterface(ABC):
+    """Interface for enhanced transcription services with LLM post-processing."""
+
+    @abstractmethod
+    def transcribe_and_enhance(self, audio_file_path: str) -> Any:
+        """Transcribe audio file and enhance the text using LLM."""
+        pass
+
+    @abstractmethod
+    def enhance_text(self, original_text: str) -> Any:
+        """Enhance existing text using LLM."""
+        pass
+
+
 class HotkeyListenerInterface(ABC):
     """Interface for hotkey listening functionality."""
 
@@ -82,57 +96,57 @@ class SessionManagerInterface(ABC):
 
 
 class ConsoleInterface(ABC):
-    """Interface for console output functionality."""
+    """Interface for logging functionality."""
 
     @abstractmethod
-    def print(self, *args, **kwargs) -> None:
-        """Print to console."""
+    def info(self, message: str) -> None:
+        """Log info message."""
         pass
 
     @abstractmethod
-    def print_panel(self, text: str, title: str = "", style: str = "default") -> None:
-        """Print a formatted panel."""
+    def error(self, message: str) -> None:
+        """Log error message."""
         pass
 
     @abstractmethod
-    def print_error(self, message: str) -> None:
-        """Print error message."""
+    def warning(self, message: str) -> None:
+        """Log warning message."""
         pass
 
     @abstractmethod
-    def print_success(self, message: str) -> None:
-        """Print success message."""
-        pass
-
-    @abstractmethod
-    def print_warning(self, message: str) -> None:
-        """Print warning message."""
+    def debug(self, message: str) -> None:
+        """Log debug message."""
         pass
 
 
 # Legacy interfaces for backward compatibility
 class AudioRecorder(AudioRecorderInterface):
     """Legacy interface for audio recording capabilities."""
+
     pass
 
 
 class TranscriptionService(TranscriptionServiceInterface):
     """Legacy interface for audio transcription capabilities."""
+
     pass
 
 
 class HotkeyListener(HotkeyListenerInterface):
     """Legacy interface for hotkey listening capabilities."""
+
     pass
 
 
 class TextPaster(TextPasterInterface):
     """Legacy interface for text pasting capabilities."""
+
     pass
 
 
 class SessionManager(SessionManagerInterface):
     """Legacy interface for recording session management."""
+
     pass
 
 

@@ -8,7 +8,11 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from src.voice_recorder.domain.models import TranscriptionConfig, TranscriptionMode, TranscriptionResult
+from src.voice_recorder.domain.models import (
+    TranscriptionConfig,
+    TranscriptionMode,
+    TranscriptionResult,
+)
 from src.voice_recorder.infrastructure.transcription import OpenAITranscriptionService
 
 
@@ -21,11 +25,8 @@ class MockTranscriptionService:
     def transcribe(self, audio_file_path: str):
         """Mock transcription method."""
         from src.voice_recorder.domain.models import TranscriptionResult
-        return TranscriptionResult(
-            text=self.mock_text,
-            confidence=0.95,
-            duration=1.0
-        )
+
+        return TranscriptionResult(text=self.mock_text, confidence=0.95, duration=1.0)
 
 
 class TestMockTranscriptionService:
@@ -56,7 +57,7 @@ class TestOpenAITranscriptionService:
         config = TranscriptionConfig(
             mode=TranscriptionMode.OPENAI_WHISPER,
             model_name="whisper-1",
-            api_key="test_key"
+            api_key="test_key",
         )
         with patch("builtins.__import__", side_effect=ImportError):
             with pytest.raises(RuntimeError, match="OpenAI library not available"):
@@ -67,7 +68,7 @@ class TestOpenAITranscriptionService:
         config = TranscriptionConfig(
             mode=TranscriptionMode.OPENAI_WHISPER,
             model_name="whisper-1",
-            api_key="test_key"
+            api_key="test_key",
         )
         mock_openai = Mock()
         mock_openai.api_key = None
@@ -81,7 +82,7 @@ class TestOpenAITranscriptionService:
         config = TranscriptionConfig(
             mode=TranscriptionMode.OPENAI_WHISPER,
             model_name="whisper-1",
-            api_key="test_key"
+            api_key="test_key",
         )
         mock_openai = Mock()
 
@@ -96,7 +97,7 @@ class TestOpenAITranscriptionService:
         config = TranscriptionConfig(
             mode=TranscriptionMode.OPENAI_WHISPER,
             model_name="whisper-1",
-            api_key="test_key"
+            api_key="test_key",
         )
         mock_openai = Mock()
         mock_client = Mock()
@@ -137,7 +138,7 @@ class TestOpenAITranscriptionService:
         config = TranscriptionConfig(
             mode=TranscriptionMode.OPENAI_WHISPER,
             model_name="whisper-1",
-            api_key="test_key"
+            api_key="test_key",
         )
         mock_openai = Mock()
         mock_client = Mock()
@@ -155,7 +156,9 @@ class TestOpenAITranscriptionService:
                 f.write(b"test_audio_data")
 
             try:
-                with pytest.raises(RuntimeError, match="OpenAI transcription failed: OpenAI error"):
+                with pytest.raises(
+                    RuntimeError, match="OpenAI transcription failed: OpenAI error"
+                ):
                     service.transcribe(temp_file)
             finally:
                 if os.path.exists(temp_file):

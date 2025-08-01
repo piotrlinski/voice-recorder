@@ -11,11 +11,15 @@ from ..domain.models import (
     ApplicationConfig,
     AudioConfig,
     AudioFormat,
-    HotkeyConfig,
     SoundConfig,
     SoundType,
     TranscriptionConfig,
     TranscriptionMode,
+    LocalWhisperModel,
+    OpenAITranscriptionConfig,
+    LocalTranscriptionConfig,
+    ControlsConfig,
+    GeneralConfig,
 )
 
 
@@ -28,7 +32,7 @@ class ConfigManager:
             self.config_dir = Path(config_dir)
         else:
             self.config_dir = Path.home() / ".voicerecorder"
-        
+
         self.config_file = self.config_dir / "config.ini"
         self._ensure_config_dir()
 
@@ -37,101 +41,338 @@ class ConfigManager:
         self.config_dir.mkdir(parents=True, exist_ok=True)
 
     def load_config(self) -> ApplicationConfig:
-        """Load configuration from INI file."""
+        """Load configuration from INI file (supports both old and new formats)."""
         if not self.config_file.exists():
             raise FileNotFoundError(f"Configuration file not found: {self.config_file}")
 
         config_parser = configparser.ConfigParser()
         config_parser.read(self.config_file)
 
+        # Detect format by checking for nested sections
+        has_nested_sections = (
+            config_parser.has_section("transcription.openai") or 
+            config_parser.has_section("transcription.local")
+        )
+        has_flat_sections = (
+            config_parser.has_section("openai") or 
+            config_parser.has_section("controls")
+        )
+
+        if has_nested_sections:
+            return self._load_nested_format(config_parser)
+        elif has_flat_sections:
+            return self._load_flat_format(config_parser)
+        else:
+            return self._load_old_format(config_parser)
+
+    def _load_nested_format(
+        self, config_parser: configparser.ConfigParser
+    ) -> ApplicationConfig:
+        """Load the new nested configuration format."""
+        
+        # Load transcription mode
+        transcription_mode = TranscriptionMode(
+            config_parser.get("transcription", "mode", fallback="openai")
+        )
+
+        # Load OpenAI transcription config
+        openai_transcription_config = OpenAITranscriptionConfig(
+            api_key=config_parser.get("transcription.openai", "api_key", fallback=None),
+            whisper_model=config_parser.get("transcription.openai", "whisper_model", fallback="whisper-1"),
+            gpt_model=config_parser.get("transcription.openai", "gpt_model", fallback="gpt-3.5-turbo"),
+            gpt_creativity=config_parser.getfloat("transcription.openai", "gpt_creativity", fallback=0.3),
+        )
+
+        # Load Local transcription config
+        local_transcription_config = LocalTranscriptionConfig(
+            whisper_model=LocalWhisperModel(
+                config_parser.get("transcription.local", "whisper_model", fallback="small")
+            ),
+            ollama_base_url=config_parser.get("transcription.local", "ollama_base_url", fallback="http://localhost:11434"),
+            ollama_model=config_parser.get("transcription.local", "ollama_model", fallback="llama3.1"),
+            ollama_creativity=config_parser.getfloat("transcription.local", "ollama_creativity", fallback=0.3),
+        )
+
+        # Transcription config
+        transcription_config = TranscriptionConfig(
+            mode=transcription_mode,
+            openai=openai_transcription_config,
+            local=local_transcription_config,
+        )
+
+        # Controls config
+        controls_config = ControlsConfig(
+            basic_key=config_parser.get("controls", "basic_key", fallback="shift_r"),
+            enhanced_key=config_parser.get("controls", "enhanced_key", fallback="ctrl_l"),
+        )
+
         # Audio config
         audio_config = AudioConfig(
             sample_rate=config_parser.getint("audio", "sample_rate", fallback=16000),
             channels=config_parser.getint("audio", "channels", fallback=1),
             format=AudioFormat(config_parser.get("audio", "format", fallback="wav")),
-            chunk_size=config_parser.getint("audio", "chunk_size", fallback=1024)
-        )
-
-        # Transcription config
-        transcription_config = TranscriptionConfig(
-            mode=TranscriptionMode(config_parser.get("transcription", "mode", fallback="openai_whisper")),
-            model_name=config_parser.get("transcription", "model_name", fallback="whisper-1"),
-            api_key=config_parser.get("transcription", "api_key", fallback=None)
-        )
-
-        # Hotkey config
-        hotkey_config = HotkeyConfig(
-            key=config_parser.get("hotkey", "key", fallback="shift"),
-            modifiers=config_parser.get("hotkey", "modifiers", fallback="").split(",") if config_parser.get("hotkey", "modifiers", fallback="") else [],
-            description=config_parser.get("hotkey", "description", fallback="Shift key for recording")
+            chunk_size=config_parser.getint("audio", "chunk_size", fallback=1024),
         )
 
         # Sound config
         sound_config = SoundConfig(
             enabled=config_parser.getboolean("sound", "enabled", fallback=True),
-            sound_type=SoundType(config_parser.get("sound", "sound_type", fallback="tone")),
-            volume=config_parser.getfloat("sound", "volume", fallback=0.15),
-            start_frequency=config_parser.getfloat("sound", "start_frequency", fallback=800.0),
-            end_frequency=config_parser.getfloat("sound", "end_frequency", fallback=1200.0),
-            duration=config_parser.getfloat("sound", "duration", fallback=0.3)
+            volume=config_parser.getint("sound", "volume", fallback=15),
+            basic_sound_type=SoundType(
+                config_parser.get("sound", "basic_sound_type", fallback="tone")
+            ),
+            basic_start_frequency=config_parser.getfloat(
+                "sound", "basic_start_frequency", fallback=800.0
+            ),
+            basic_end_frequency=config_parser.getfloat(
+                "sound", "basic_end_frequency", fallback=1200.0
+            ),
+            enhanced_sound_type=SoundType(
+                config_parser.get("sound", "enhanced_sound_type", fallback="tone")
+            ),
+            enhanced_start_frequency=config_parser.getfloat(
+                "sound", "enhanced_start_frequency", fallback=1000.0
+            ),
+            enhanced_end_frequency=config_parser.getfloat(
+                "sound", "enhanced_end_frequency", fallback=1400.0
+            ),
+            duration=config_parser.getfloat("sound", "duration", fallback=0.3),
         )
 
-        # General settings
-        auto_paste = config_parser.getboolean("general", "auto_paste", fallback=True)
-        temp_directory = config_parser.get("general", "temp_directory", fallback=str(Path.home() / ".voicerecorder" / "temp"))
+        # General config
+        general_config = GeneralConfig(
+            auto_paste=config_parser.getboolean("general", "auto_paste", fallback=True)
+        )
 
         return ApplicationConfig(
-            audio_config=audio_config,
-            transcription_config=transcription_config,
-            hotkey_config=hotkey_config,
-            sound_config=sound_config,
-            auto_paste=auto_paste,
-            temp_directory=temp_directory
+            transcription=transcription_config,
+            controls=controls_config,
+            audio=audio_config,
+            sound=sound_config,
+            general=general_config,
+        )
+
+    def _load_flat_format(
+        self, config_parser: configparser.ConfigParser
+    ) -> ApplicationConfig:
+        """Load the flat configuration format (backwards compatibility)."""
+
+        # Convert flat format to nested format by creating nested configs
+        # Map "cloud" mode to "openai" mode for backwards compatibility
+        mode_value = config_parser.get("transcription", "mode", fallback="cloud")
+        transcription_mode = TranscriptionMode.OPENAI if mode_value == "cloud" else TranscriptionMode.LOCAL
+
+        # Create OpenAI transcription config from flat format
+        openai_transcription_config = OpenAITranscriptionConfig(
+            api_key=config_parser.get("openai", "api_key", fallback=None),
+            gpt_creativity=config_parser.getfloat("transcription", "gpt_creativity", fallback=0.3),
+        )
+
+        # Create Local transcription config from flat format
+        local_transcription_config = LocalTranscriptionConfig(
+            whisper_model=LocalWhisperModel(
+                config_parser.get("transcription", "local_model", fallback="small")
+            ),
+        )
+
+        # Transcription config with nested structure
+        transcription_config = TranscriptionConfig(
+            mode=transcription_mode,
+            openai=openai_transcription_config,
+            local=local_transcription_config,
+        )
+
+        # Controls config
+        controls_config = ControlsConfig(
+            basic_key=config_parser.get("controls", "basic_key", fallback="shift_r"),
+            enhanced_key=config_parser.get(
+                "controls", "enhanced_key", fallback="ctrl_l"
+            ),
+        )
+
+        # Audio config
+        audio_config = AudioConfig(
+            sample_rate=config_parser.getint("audio", "sample_rate", fallback=16000),
+            channels=config_parser.getint("audio", "channels", fallback=1),
+            format=AudioFormat(config_parser.get("audio", "format", fallback="wav")),
+            chunk_size=config_parser.getint("audio", "chunk_size", fallback=1024),
+        )
+
+        # Sound config
+        sound_config = SoundConfig(
+            enabled=config_parser.getboolean("sound", "enabled", fallback=True),
+            volume=config_parser.getint("sound", "volume", fallback=15),
+            basic_sound_type=SoundType(
+                config_parser.get("sound", "basic_sound_type", fallback="tone")
+            ),
+            basic_start_frequency=config_parser.getfloat(
+                "sound", "basic_start_frequency", fallback=800.0
+            ),
+            basic_end_frequency=config_parser.getfloat(
+                "sound", "basic_end_frequency", fallback=1200.0
+            ),
+            enhanced_sound_type=SoundType(
+                config_parser.get("sound", "enhanced_sound_type", fallback="tone")
+            ),
+            enhanced_start_frequency=config_parser.getfloat(
+                "sound", "enhanced_start_frequency", fallback=1000.0
+            ),
+            enhanced_end_frequency=config_parser.getfloat(
+                "sound", "enhanced_end_frequency", fallback=1400.0
+            ),
+            duration=config_parser.getfloat("sound", "duration", fallback=0.3),
+        )
+
+        # General config
+        general_config = GeneralConfig(
+            auto_paste=config_parser.getboolean("general", "auto_paste", fallback=True)
+        )
+
+        return ApplicationConfig(
+            transcription=transcription_config,
+            controls=controls_config,
+            audio=audio_config,
+            sound=sound_config,
+            general=general_config,
+        )
+
+    def _load_old_format(
+        self, config_parser: configparser.ConfigParser
+    ) -> ApplicationConfig:
+        """Load and migrate from old configuration format."""
+        # Extract OpenAI API key from old locations
+        api_key = config_parser.get(
+            "transcription", "openai_api_key", fallback=None
+        ) or config_parser.get("enhanced_transcription", "api_key", fallback=None)
+
+        # Map old transcription mode to new mode
+        old_mode = config_parser.get("transcription", "mode", fallback="openai_whisper")
+        new_mode = (
+            TranscriptionMode.CLOUD
+            if old_mode == "openai_whisper"
+            else TranscriptionMode.LOCAL
+        )
+
+        # Extract local model name (or use default)
+        model_name = config_parser.get(
+            "transcription", "model_name", fallback="whisper-1"
+        )
+        local_model = LocalWhisperModel.SMALL  # Default
+        if model_name in ["small", "medium", "large"]:
+            local_model = LocalWhisperModel(model_name)
+
+        # Extract creativity from old temperature setting
+        creativity = config_parser.getfloat(
+            "enhanced_transcription", "temperature", fallback=0.3
+        )
+
+        # Extract hotkeys from old format
+        basic_key = config_parser.get("hotkey", "key", fallback="shift_r")
+        enhanced_key = config_parser.get("hotkey", "enhanced_key", fallback="ctrl_l")
+
+        # Convert old volume format (0.0-1.0) to new format (0-100)
+        old_volume = config_parser.getfloat("sound", "volume", fallback=0.15)
+        new_volume = int(old_volume * 100) if old_volume <= 1.0 else int(old_volume)
+
+        # Create new format config from old values
+        from ..domain.models import OpenAIConfig, ControlsConfig, GeneralConfig
+
+        return ApplicationConfig(
+            openai=OpenAIConfig(api_key=api_key),
+            transcription=TranscriptionConfig(
+                mode=new_mode, local_model=local_model, gpt_creativity=creativity
+            ),
+            controls=ControlsConfig(basic_key=basic_key, enhanced_key=enhanced_key),
+            audio=AudioConfig(
+                sample_rate=config_parser.getint(
+                    "audio", "sample_rate", fallback=16000
+                ),
+                channels=config_parser.getint("audio", "channels", fallback=1),
+                format=AudioFormat(
+                    config_parser.get("audio", "format", fallback="wav")
+                ),
+                chunk_size=config_parser.getint("audio", "chunk_size", fallback=1024),
+            ),
+            sound=SoundConfig(
+                enabled=config_parser.getboolean("sound", "enabled", fallback=True),
+                volume=new_volume,
+                basic_sound_type=SoundType(
+                    config_parser.get("sound", "sound_type", fallback="tone")
+                ),
+                basic_start_frequency=config_parser.getfloat(
+                    "sound", "start_frequency", fallback=800.0
+                ),
+                basic_end_frequency=config_parser.getfloat(
+                    "sound", "end_frequency", fallback=1200.0
+                ),
+                enhanced_sound_type=SoundType.TONE,  # Default for enhanced
+                enhanced_start_frequency=1000.0,
+                enhanced_end_frequency=1400.0,
+                duration=config_parser.getfloat("sound", "duration", fallback=0.3),
+            ),
+            general=GeneralConfig(
+                auto_paste=config_parser.getboolean(
+                    "general", "auto_paste", fallback=True
+                )
+            ),
         )
 
     def save_config(self, config: ApplicationConfig) -> None:
-        """Save configuration to INI file."""
+        """Save configuration to new nested INI format."""
         config_parser = configparser.ConfigParser()
+
+        # Transcription main section
+        config_parser["transcription"] = {
+            "mode": config.transcription.mode.value,
+        }
+
+        # Nested OpenAI transcription section
+        openai_section = {
+            "whisper_model": config.transcription.openai.whisper_model,
+            "gpt_model": config.transcription.openai.gpt_model,
+            "gpt_creativity": str(config.transcription.openai.gpt_creativity),
+        }
+        if config.transcription.openai.api_key:
+            openai_section["api_key"] = config.transcription.openai.api_key
+        config_parser["transcription.openai"] = openai_section
+
+        # Nested Local transcription section
+        config_parser["transcription.local"] = {
+            "whisper_model": config.transcription.local.whisper_model.value,
+            "ollama_base_url": config.transcription.local.ollama_base_url,
+            "ollama_model": config.transcription.local.ollama_model,
+            "ollama_creativity": str(config.transcription.local.ollama_creativity),
+        }
+
+        # Controls section
+        config_parser["controls"] = {
+            "basic_key": config.controls.basic_key,
+            "enhanced_key": config.controls.enhanced_key,
+        }
 
         # Audio section
         config_parser["audio"] = {
-            "sample_rate": str(config.audio_config.sample_rate),
-            "channels": str(config.audio_config.channels),
-            "format": config.audio_config.format.value,
-            "chunk_size": str(config.audio_config.chunk_size)
-        }
-
-        # Transcription section
-        transcription_section = {
-            "mode": config.transcription_config.mode.value,
-            "model_name": config.transcription_config.model_name,
-        }
-        if config.transcription_config.api_key:
-            transcription_section["api_key"] = config.transcription_config.api_key
-        config_parser["transcription"] = transcription_section
-
-        # Hotkey section
-        config_parser["hotkey"] = {
-            "key": config.hotkey_config.key,
-            "modifiers": ",".join(config.hotkey_config.modifiers),
-            "description": config.hotkey_config.description
+            "sample_rate": str(config.audio.sample_rate),
+            "channels": str(config.audio.channels),
+            "format": config.audio.format.value,
+            "chunk_size": str(config.audio.chunk_size),
         }
 
         # Sound section
         config_parser["sound"] = {
-            "enabled": str(config.sound_config.enabled),
-            "sound_type": config.sound_config.sound_type.value,
-            "volume": str(config.sound_config.volume),
-            "start_frequency": str(config.sound_config.start_frequency),
-            "end_frequency": str(config.sound_config.end_frequency),
-            "duration": str(config.sound_config.duration)
+            "enabled": str(config.sound.enabled),
+            "volume": str(config.sound.volume),
+            "basic_sound_type": config.sound.basic_sound_type.value,
+            "basic_start_frequency": str(config.sound.basic_start_frequency),
+            "basic_end_frequency": str(config.sound.basic_end_frequency),
+            "enhanced_sound_type": config.sound.enhanced_sound_type.value,
+            "enhanced_start_frequency": str(config.sound.enhanced_start_frequency),
+            "enhanced_end_frequency": str(config.sound.enhanced_end_frequency),
+            "duration": str(config.sound.duration),
         }
 
         # General section
-        config_parser["general"] = {
-            "auto_paste": str(config.auto_paste),
-            "temp_directory": config.temp_directory
-        }
+        config_parser["general"] = {"auto_paste": str(config.general.auto_paste)}
 
         with open(self.config_file, "w") as f:
             config_parser.write(f)
@@ -155,9 +396,8 @@ class ConfigManager:
         return str(self.config_file)
 
     def get_temp_directory(self) -> str:
-        """Get the configured temporary directory."""
-        config = self.load_config()
-        temp_dir = Path(config.temp_directory)
+        """Get the default temporary directory."""
+        temp_dir = Path.home() / ".voicerecorder" / "temp"
         temp_dir.mkdir(parents=True, exist_ok=True)
         return str(temp_dir)
 
@@ -168,47 +408,62 @@ class ConfigManager:
         return default_config
 
     def update_config(self, **kwargs) -> ApplicationConfig:
-        """Update configuration with new values."""
+        """Update configuration with new values (supports both old and new parameter names)."""
         current_config = self.load_config()
-        
-        # Update audio config
-        if "audio_config" in kwargs:
-            audio_data = kwargs["audio_config"]
-            current_config.audio_config.sample_rate = audio_data.get("sample_rate", current_config.audio_config.sample_rate)
-            current_config.audio_config.channels = audio_data.get("channels", current_config.audio_config.channels)
-            current_config.audio_config.format = audio_data.get("format", current_config.audio_config.format)
-            current_config.audio_config.chunk_size = audio_data.get("chunk_size", current_config.audio_config.chunk_size)
+
+        # Update OpenAI config
+        if "openai_api_key" in kwargs:
+            current_config.openai.api_key = kwargs["openai_api_key"]
 
         # Update transcription config
-        if "transcription_config" in kwargs:
-            trans_data = kwargs["transcription_config"]
-            current_config.transcription_config.mode = TranscriptionMode(trans_data.get("mode", current_config.transcription_config.mode.value))
-            current_config.transcription_config.model_name = trans_data.get("model_name", current_config.transcription_config.model_name)
-            current_config.transcription_config.api_key = trans_data.get("api_key", current_config.transcription_config.api_key)
+        if "transcription_mode" in kwargs:
+            current_config.transcription.mode = TranscriptionMode(
+                kwargs["transcription_mode"]
+            )
+        if "local_model" in kwargs:
+            current_config.transcription.local_model = LocalWhisperModel(
+                kwargs["local_model"]
+            )
+        if "gpt_creativity" in kwargs:
+            current_config.transcription.gpt_creativity = kwargs["gpt_creativity"]
 
+        # Update controls config
+        if "basic_key" in kwargs:
+            current_config.controls.basic_key = kwargs["basic_key"]
+        if "enhanced_key" in kwargs:
+            current_config.controls.enhanced_key = kwargs["enhanced_key"]
 
-        # Update hotkey config
-        if "hotkey_config" in kwargs:
-            hotkey_data = kwargs["hotkey_config"]
-            current_config.hotkey_config.key = hotkey_data.get("key", current_config.hotkey_config.key)
-            current_config.hotkey_config.modifiers = hotkey_data.get("modifiers", current_config.hotkey_config.modifiers)
-            current_config.hotkey_config.description = hotkey_data.get("description", current_config.hotkey_config.description)
+        # Update audio config (backwards compatibility)
+        if "audio_config" in kwargs:
+            audio_data = kwargs["audio_config"]
+            current_config.audio.sample_rate = audio_data.get(
+                "sample_rate", current_config.audio.sample_rate
+            )
+            current_config.audio.channels = audio_data.get(
+                "channels", current_config.audio.channels
+            )
+            current_config.audio.format = audio_data.get(
+                "format", current_config.audio.format
+            )
+            current_config.audio.chunk_size = audio_data.get(
+                "chunk_size", current_config.audio.chunk_size
+            )
 
-        # Update sound config
+        # Update sound config (backwards compatibility)
         if "sound_config" in kwargs:
             sound_data = kwargs["sound_config"]
-            current_config.sound_config.enabled = sound_data.get("sound_enabled", current_config.sound_config.enabled)
-            current_config.sound_config.sound_type = SoundType(sound_data.get("sound_type", current_config.sound_config.sound_type.value))
-            current_config.sound_config.volume = sound_data.get("sound_volume", current_config.sound_config.volume)
-            current_config.sound_config.duration = sound_data.get("sound_duration", current_config.sound_config.duration)
-            current_config.sound_config.start_frequency = sound_data.get("sound_start_frequency", current_config.sound_config.start_frequency)
-            current_config.sound_config.end_frequency = sound_data.get("sound_end_frequency", current_config.sound_config.end_frequency)
+            current_config.sound.enabled = sound_data.get(
+                "sound_enabled", current_config.sound.enabled
+            )
+            # Convert volume if needed
+            volume = sound_data.get("sound_volume", current_config.sound.volume)
+            if isinstance(volume, float) and volume <= 1.0:
+                volume = int(volume * 100)
+            current_config.sound.volume = volume
 
-        # Update other settings
+        # Update general config
         if "auto_paste" in kwargs:
-            current_config.auto_paste = kwargs["auto_paste"]
-        if "temp_directory" in kwargs:
-            current_config.temp_directory = kwargs["temp_directory"]
+            current_config.general.auto_paste = kwargs["auto_paste"]
 
         self.save_config(current_config)
-        return current_config 
+        return current_config

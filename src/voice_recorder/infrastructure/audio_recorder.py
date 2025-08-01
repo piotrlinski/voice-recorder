@@ -22,20 +22,21 @@ class PyAudioRecorder(AudioRecorderInterface):
         self.pa_int16: Optional[Any] = None
         self.audio_streams: Dict[str, Any] = {}
         self.audio_frames: Dict[str, list] = {}
-        
+
         # Try to initialize PyAudio
         try:
             import pyaudio
+
             self.pyaudio = pyaudio.PyAudio()
             self.pa_continue = pyaudio.paContinue
             self.pa_int16 = pyaudio.paInt16
             self.pyaudio_available = True
         except ImportError:
             if self.console:
-                self.console.print_error("PyAudio not available - audio recording disabled")
+                self.console.error("PyAudio not available - audio recording disabled")
         except Exception as e:
             if self.console:
-                self.console.print_error(f"PyAudio initialization failed: {e}")
+                self.console.error(f"PyAudio initialization failed: {e}")
 
     def _create_audio_callback(self, session_id: str):
         """Create a proper audio callback closure."""
@@ -48,7 +49,7 @@ class PyAudioRecorder(AudioRecorderInterface):
                     self.audio_frames[session_id].append(in_data)
             except Exception as e:
                 if self.console:
-                    self.console.print_error(f"⚠️ Audio callback error: {e}")
+                    self.console.error(f"Audio callback error: {e}")
             return (in_data, self.pa_continue)
 
         return audio_callback
@@ -74,14 +75,14 @@ class PyAudioRecorder(AudioRecorderInterface):
             )
             self.audio_streams[session_id] = stream
             stream.start_stream()
-            
+
             if self.console:
-                self.console.print_success(f"🎙️ PyAudio recording started (Session: {session_id})")
-            
+                self.console.info(f"PyAudio recording started (Session: {session_id})")
+
             return session_id
         except Exception as e:
             if self.console:
-                self.console.print_error(f"PyAudio recording failed: {e}")
+                self.console.error(f"PyAudio recording failed: {e}")
             raise
 
     def stop_recording(self, session_id: str) -> Optional[str]:
@@ -95,43 +96,44 @@ class PyAudioRecorder(AudioRecorderInterface):
                 stream.stop_stream()
             if hasattr(stream, "close"):
                 stream.close()
-            
+
             # Remove from active streams
             del self.audio_streams[session_id]
-            
+
             # Get audio frames
             audio_frames = self.audio_frames.get(session_id, [])
             if not audio_frames:
                 if self.console:
-                    self.console.print_warning("No audio frames recorded")
+                    self.console.warning("No audio frames recorded")
                 return None
-            
+
             # Create temporary file
             temp_file = tempfile.NamedTemporaryFile(
                 suffix=".wav", delete=False, dir=tempfile.gettempdir()
             )
             temp_file_path = temp_file.name
             temp_file.close()
-            
+
             # Save audio to file
             import wave
-            with wave.open(temp_file_path, 'wb') as wav_file:
+
+            with wave.open(temp_file_path, "wb") as wav_file:
                 wav_file.setnchannels(1)  # Mono
                 wav_file.setsampwidth(self.pyaudio.get_sample_size(self.pa_int16))
                 wav_file.setframerate(16000)  # Default sample rate
-                wav_file.writeframes(b''.join(audio_frames))
-            
+                wav_file.writeframes(b"".join(audio_frames))
+
             # Clean up audio frames
             if session_id in self.audio_frames:
                 del self.audio_frames[session_id]
-            
+
             if self.console:
-                self.console.print_success(f"Recording saved to: {temp_file_path}")
-            
+                self.console.info(f"Recording saved to: {temp_file_path}")
+
             return temp_file_path
         except Exception as e:
             if self.console:
-                self.console.print_error(f"Failed to save recording: {e}")
+                self.console.error(f"Failed to save recording: {e}")
             return None
 
     def is_recording(self, session_id: str) -> bool:

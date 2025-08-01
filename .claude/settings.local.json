@@ -1,0 +1,29 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mkdir:*)",
+      "Bash(pip install:*)",
+      "Bash(python:*)",
+      "Bash(echo $VIRTUAL_ENV)",
+      "Bash(ls:*)",
+      "Bash(find:*)",
+      "Bash(voice-recorder:*)",
+      "Bash(timeout:*)",
+      "Bash(rm:*)",
+      "Bash(/Users/piotrklinski/my/repos/voice-recorder/.venv/bin/voice-recorder --help)",
+      "Bash(hash -r)",
+      "Bash(touch:*)",
+      "Bash(cat:*)",
+      "Bash(mv:*)",
+      "Bash(gtimeout:*)",
+      "WebFetch(domain:www.youtube.com)",
+      "Bash(grep:*)",
+      "Bash(mypy:*)",
+      "Bash(pkill:*)",
+      "Bash(kill:*)",
+      "Bash(osascript:*)",
+      "Bash(black:*)"
+    ],
+    "deny": []
+  }
+}

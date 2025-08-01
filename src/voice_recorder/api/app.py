@@ -3,9 +3,11 @@ Voice recorder application entry point.
 """
 
 import os
+import signal
+import sys
+import time
 from typing import Optional
 
-from dotenv import load_dotenv
 
 from ..domain.interfaces import (
     AudioRecorderInterface,
@@ -13,14 +15,15 @@ from ..domain.interfaces import (
     HotkeyListenerInterface,
     SessionManagerInterface,
     TextPasterInterface,
-    TranscriptionServiceInterface
+    TranscriptionServiceInterface,
+    EnhancedTranscriptionServiceInterface,
 )
 from ..domain.models import ApplicationConfig
 from ..infrastructure.audio_feedback import SystemAudioFeedback
 from ..infrastructure.audio_recorder import PyAudioRecorder
 from ..infrastructure.config_manager import ConfigManager
 from ..infrastructure.hotkey import PynputHotkeyListener
-from ..infrastructure.rich_console import RichConsoleAdapter
+from ..infrastructure.logging_adapter import LoggingAdapter
 from ..infrastructure.session_manager import InMemorySessionManager
 from ..infrastructure.text_paster import MacOSTextPaster
 from ..infrastructure.transcription.factory import TranscriptionServiceFactory
@@ -30,17 +33,12 @@ from ..services.voice_recorder_service import VoiceRecorderService
 class VoiceRecorderApp:
     """Main voice recorder application class."""
 
-    def __init__(self, config: Optional[ApplicationConfig] = None, env_file: Optional[str] = None):
+    def __init__(self, config: Optional[ApplicationConfig] = None):
         """Initialize the voice recorder application."""
-        # Load environment variables if specified
-        if env_file and os.path.exists(env_file):
-            load_dotenv(env_file)
-        else:
-            load_dotenv()
 
-        # Initialize console
-        self.console = RichConsoleAdapter()
-        
+        # Initialize logging
+        self.console = LoggingAdapter()
+
         # Load configuration
         if config is None:
             config_manager = ConfigManager()
@@ -48,11 +46,22 @@ class VoiceRecorderApp:
         self.config = config
 
         # Initialize infrastructure components
-        self.audio_recorder: AudioRecorderInterface = PyAudioRecorder(console=self.console)
-        self.transcription_service: TranscriptionServiceInterface = TranscriptionServiceFactory.create_service(
-            config.transcription_config
+        self.audio_recorder: AudioRecorderInterface = PyAudioRecorder(
+            console=self.console
         )
-        self.hotkey_listener: HotkeyListenerInterface = PynputHotkeyListener(console=self.console)
+        self.transcription_service: TranscriptionServiceInterface = (
+            TranscriptionServiceFactory.create_service(
+                config.transcription, console=self.console
+            )
+        )
+        self.enhanced_transcription_service: EnhancedTranscriptionServiceInterface = (
+            TranscriptionServiceFactory.create_enhanced_service(
+                config.transcription, console=self.console
+            )
+        )
+        self.hotkey_listener: HotkeyListenerInterface = PynputHotkeyListener(
+            console=self.console
+        )
         self.text_paster: TextPasterInterface = MacOSTextPaster(console=self.console)
         self.session_manager: SessionManagerInterface = InMemorySessionManager()
         self.audio_feedback: AudioFeedback = SystemAudioFeedback(console=self.console)
@@ -61,6 +70,7 @@ class VoiceRecorderApp:
         self.voice_recorder_service = VoiceRecorderService(
             audio_recorder=self.audio_recorder,
             transcription_service=self.transcription_service,
+            enhanced_transcription_service=self.enhanced_transcription_service,
             hotkey_listener=self.hotkey_listener,
             text_paster=self.text_paster,
             session_manager=self.session_manager,
@@ -70,138 +80,64 @@ class VoiceRecorderApp:
         )
 
         # Set up signal handlers
-        import signal
         signal.signal(signal.SIGINT, self._signal_handler)
         signal.signal(signal.SIGTERM, self._signal_handler)
 
     def _signal_handler(self, signum, frame):
         """Handle shutdown signals."""
-        self.console.print("\n🛑 [bold red]Shutting down voice recorder...[/bold red]")
+        self.console.info("Shutting down voice recorder...")
         self.stop()
-        import sys
         sys.exit(0)
 
     def start(self):
         """Start the voice recorder application."""
-        # Create startup panel
-        from rich.text import Text
-        from rich.panel import Panel
-        
-        startup_text = Text()
-        startup_text.append("🎤 Voice Recorder Application Starting...\n", style="bold blue")
-        startup_text.append(f"⌨️  Hotkey: {self.config.hotkey_config.key}\n", style="cyan")
-        startup_text.append(f"🎵 Audio: {self.config.audio_config.sample_rate}Hz, {self.config.audio_config.channels} channel(s)\n", style="cyan")
-        startup_text.append(f"🤖 Transcription: {self.config.transcription_config.mode.value}\n", style="cyan")
-        startup_text.append(f"🧠 Model: {self.config.transcription_config.model_name}\n", style="cyan")
-        startup_text.append(f"📋 Auto-paste: {self.config.auto_paste}\n", style="cyan")
-        startup_text.append(f"🔔 Sound feedback: {self.config.sound_config.enabled}", style="cyan")
-        
-        startup_panel = Panel(
-            startup_text,
-            title="[bold green]Voice Recorder Configuration[/bold green]",
-            border_style="green",
-            padding=(1, 2)
+        # Log startup configuration
+        self.console.info("Voice Recorder Application Starting...")
+        self.console.info(f"Basic Key: {self.config.controls.basic_key}")
+        self.console.info(f"Enhanced Key: {self.config.controls.enhanced_key}")
+        self.console.info(
+            f"Audio: {self.config.audio.sample_rate}Hz, {self.config.audio.channels} channel(s)"
         )
-        self.console.print(startup_panel)
-        
+        self.console.info(f"Transcription: {self.config.transcription.mode.value}")
+        self.console.info(f"Auto-paste: {self.config.general.auto_paste}")
+        self.console.info(f"Sound feedback: {self.config.sound.enabled}")
+
         try:
             self.voice_recorder_service.start()
-            
-            # Success panel
-            success_text = Text()
-            success_text.append("✅ Voice recorder started successfully!\n", style="bold green")
-            success_text.append("💡 Press Ctrl+C to stop", style="yellow")
-            
-            success_panel = Panel(
-                success_text,
-                title="[bold green]Ready to Record[/bold green]",
-                border_style="green",
-                padding=(1, 2)
-            )
-            self.console.print(success_panel)
-            
+            self.console.info("Voice recorder started successfully!")
+            self.console.info("Press Ctrl+C to stop")
+
             # Keep the application running
             try:
                 while True:
-                    import time
                     time.sleep(1)
             except KeyboardInterrupt:
                 pass
         except Exception as e:
-            error_text = Text()
-            error_text.append(f"❌ Failed to start voice recorder: {e}", style="bold red")
-            
-            error_panel = Panel(
-                error_text,
-                title="[bold red]Startup Error[/bold red]",
-                border_style="red",
-                padding=(1, 2)
-            )
-            self.console.print(error_panel)
+            self.console.error(f"Failed to start voice recorder: {e}")
             raise
 
     def stop(self):
         """Stop the voice recorder application."""
-        self.console.print("🛑 [bold yellow]Stopping voice recorder...[/bold yellow]")
+        self.console.info("Stopping voice recorder...")
         try:
             self.voice_recorder_service.stop()
-            
-            from rich.text import Text
-            from rich.panel import Panel
-            
-            stop_text = Text()
-            stop_text.append("✅ Voice recorder stopped successfully!", style="bold green")
-            
-            stop_panel = Panel(
-                stop_text,
-                title="[bold green]Shutdown Complete[/bold green]",
-                border_style="green",
-                padding=(1, 2)
-            )
-            self.console.print(stop_panel)
+            self.console.info("Voice recorder stopped successfully!")
         except Exception as e:
-            error_text = Text()
-            error_text.append(f"❌ Error stopping voice recorder: {e}", style="bold red")
-            
-            error_panel = Panel(
-                error_text,
-                title="[bold red]Shutdown Error[/bold red]",
-                border_style="red",
-                padding=(1, 2)
-            )
-            self.console.print(error_panel)
+            self.console.error(f"Error stopping voice recorder: {e}")
 
 
-def create_app(config: Optional[ApplicationConfig] = None, env_file: Optional[str] = None) -> VoiceRecorderApp:
+def create_app(config: Optional[ApplicationConfig] = None) -> VoiceRecorderApp:
     """Factory function to create the voice recorder application."""
-    return VoiceRecorderApp(config, env_file=env_file)
+    return VoiceRecorderApp(config)
 
 
 def main():
     """Main entry point for the voice recorder application."""
-    import sys
-    from rich.console import Console
-    from rich.text import Text
-    from rich.panel import Panel
-    
-    console = Console()
-    try:
-        app = create_app()
-        app.start()
-    except KeyboardInterrupt:
-        console.print("\n👋 [bold yellow]Application interrupted by user[/bold yellow]")
-    except Exception as e:
-        error_text = Text()
-        error_text.append(f"💥 Application error: {e}", style="bold red")
-        
-        error_panel = Panel(
-            error_text,
-            title="[bold red]Fatal Error[/bold red]",
-            border_style="red",
-            padding=(1, 2)
-        )
-        console.print(error_panel)
-        sys.exit(1)
+    # Import here to avoid circular imports
+    from ..cli.commands import main as cli_main
+
+    sys.exit(cli_main())
 
 
 if __name__ == "__main__":

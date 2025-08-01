@@ -47,9 +47,3 @@ class InMemorySessionManager:
     def clear_sessions(self) -> None:
         """Clear all sessions."""
         self.sessions.clear()
-
-
-
-
-
-
