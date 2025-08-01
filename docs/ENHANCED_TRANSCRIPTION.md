@@ -75,21 +75,21 @@ Please improve the following transcribed text by fixing grammar, punctuation, an
 
 You can customize the audio feedback sounds to distinguish between basic and enhanced transcription:
 
-**Current Configuration** (Distinct Sounds):
+**Current Configuration** (Consistent Sounds):
 ```ini
 [sound]
 enabled = True
 volume = 5
 
-# Basic transcription - Lower pitched tone
+# Basic transcription - Same 800 Hz tone for start and stop
 basic_sound_type = tone
-basic_start_frequency = 600.0
+basic_start_frequency = 800.0
 basic_end_frequency = 800.0
 
-# Enhanced transcription - Higher pitched tone
+# Enhanced transcription - Same 1200 Hz tone for start and stop
 enhanced_sound_type = tone
 enhanced_start_frequency = 1200.0
-enhanced_end_frequency = 1600.0
+enhanced_end_frequency = 1200.0
 
 duration = 0.3
 ```
@@ -100,21 +100,27 @@ duration = 0.3
 enabled = True
 volume = 5
 
-# Basic transcription - Simple beep
+# Basic transcription - Simple beep for both start and stop
 basic_sound_type = beep
 basic_start_frequency = 800.0
 basic_end_frequency = 800.0
 
-# Enhanced transcription - Ascending tone
+# Enhanced transcription - Tone for both start and stop
 enhanced_sound_type = tone
-enhanced_start_frequency = 1000.0
-enhanced_end_frequency = 1400.0
+enhanced_start_frequency = 1200.0
+enhanced_end_frequency = 1200.0
 
 duration = 0.3
 ```
 
+**Sound Behavior**:
+- **Start and Stop**: Use the same sound (consistent experience)
+- **Basic Mode**: Lower frequency (800 Hz) - deeper sound
+- **Enhanced Mode**: Higher frequency (1200 Hz) - brighter sound
+- **Distinction**: Different frequencies help identify which mode you're using
+
 **Sound Type Options**:
-- `tone` - Custom frequency sweep (ascending/descending)
+- `tone` - Custom frequency tone (consistent for start/stop)
 - `beep` - Simple system beep
 - `none` - No sound feedback
 

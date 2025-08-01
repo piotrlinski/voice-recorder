@@ -152,10 +152,9 @@ class SystemAudioFeedback(AudioFeedback):
 
         try:
             if self.sound_config.basic_sound_type == SoundType.TONE:
-                # Generate ascending tone
-                audio_data = self._generate_sweep_tone(
+                # Generate tone at basic frequency (same for start and stop)
+                audio_data = self._generate_tone(
                     self.sound_config.basic_start_frequency,
-                    self.sound_config.basic_end_frequency,
                     self.sound_config.duration,
                 )
                 self._play_audio(audio_data)
@@ -185,9 +184,8 @@ class SystemAudioFeedback(AudioFeedback):
 
         try:
             if self.sound_config.basic_sound_type == SoundType.TONE:
-                # Generate descending tone
-                audio_data = self._generate_sweep_tone(
-                    self.sound_config.basic_end_frequency,
+                # Generate tone at basic frequency (same for start and stop)
+                audio_data = self._generate_tone(
                     self.sound_config.basic_start_frequency,
                     self.sound_config.duration,
                 )
@@ -218,10 +216,9 @@ class SystemAudioFeedback(AudioFeedback):
 
         try:
             if self.sound_config.enhanced_sound_type == SoundType.TONE:
-                # Generate ascending tone
-                audio_data = self._generate_sweep_tone(
+                # Generate tone at enhanced frequency (same for start and stop)
+                audio_data = self._generate_tone(
                     self.sound_config.enhanced_start_frequency,
-                    self.sound_config.enhanced_end_frequency,
                     self.sound_config.duration,
                 )
                 self._play_audio(audio_data)
@@ -251,9 +248,8 @@ class SystemAudioFeedback(AudioFeedback):
 
         try:
             if self.sound_config.enhanced_sound_type == SoundType.TONE:
-                # Generate descending tone
-                audio_data = self._generate_sweep_tone(
-                    self.sound_config.enhanced_end_frequency,
+                # Generate tone at enhanced frequency (same for start and stop)
+                audio_data = self._generate_tone(
                     self.sound_config.enhanced_start_frequency,
                     self.sound_config.duration,
                 )
