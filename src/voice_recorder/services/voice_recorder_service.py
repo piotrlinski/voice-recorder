@@ -175,8 +175,9 @@ class VoiceRecorderService:
             # Update session
             self.session_manager.update_session(self.current_session)
 
-            # Play basic transcription sound
-            self._play_basic_start_sound()
+            # Play basic transcription sound (only if start sounds are enabled)
+            if not self.config.sound.disable_start_sounds:
+                self._play_basic_start_sound()
 
             # Recording started notification
             self.console.info(f"Basic recording started (Session: {session_id})")
@@ -286,8 +287,9 @@ class VoiceRecorderService:
             # Update session
             self.session_manager.update_session(self.current_session)
 
-            # Play enhanced transcription sound
-            self._play_enhanced_start_sound()
+            # Play enhanced transcription sound (only if start sounds are enabled)
+            if not self.config.sound.disable_start_sounds:
+                self._play_enhanced_start_sound()
 
             # Enhanced recording started notification
             self.console.info(f"Enhanced recording started (Session: {session_id})")

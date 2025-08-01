@@ -113,6 +113,29 @@ enhanced_end_frequency = 1200.0
 duration = 0.3
 ```
 
+**Sound Configuration Options**:
+
+1. **Enable/Disable All Sounds**: Set `enabled = False` to disable all audio feedback
+2. **Disable Start Sounds Only**: Set `disable_start_sounds = True` to skip start recording sounds but keep stop sounds
+3. **Sound Types**: Choose between `tone`, `beep`, or `none` for each mode
+4. **Volume Control**: Adjust volume from 0-100%
+5. **Frequency Ranges**: Customize start/end frequencies for sweep tones
+
+**Example: Disable Start Sounds Only**:
+```ini
+[sound]
+enabled = True
+disable_start_sounds = True  # Skip start sounds, keep stop sounds
+volume = 10
+basic_sound_type = tone
+basic_start_frequency = 600.0
+basic_end_frequency = 800.0
+enhanced_sound_type = tone
+enhanced_start_frequency = 1000.0
+enhanced_end_frequency = 1200.0
+duration = 0.2
+```
+
 **Sound Behavior**:
 - **Start**: Ascending sweep tone (low→high frequency)
 - **Stop**: Descending sweep tone (high→low frequency)

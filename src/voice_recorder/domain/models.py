@@ -180,6 +180,7 @@ class SoundConfig(BaseModel):
     """Audio feedback sound configuration."""
 
     enabled: bool = Field(default=True, description="Enable audio feedback sounds")
+    disable_start_sounds: bool = Field(default=False, description="Disable start recording sounds (keep stop sounds)")
     volume: int = Field(
         default=15, ge=0, le=100, description="Sound volume percentage (0 to 100)"
     )
@@ -191,18 +192,18 @@ class SoundConfig(BaseModel):
         default=800.0, description="Start frequency for basic transcription tone (Hz)"
     )
     basic_end_frequency: float = Field(
-        default=1200.0, description="End frequency for basic transcription tone (Hz)"
+        default=1400.0, description="End frequency for basic transcription tone (Hz)"
     )
     # Enhanced transcription sound
     enhanced_sound_type: SoundType = Field(
         default=SoundType.TONE, description="Sound type for enhanced transcription"
     )
     enhanced_start_frequency: float = Field(
-        default=1000.0,
+        default=200.0,
         description="Start frequency for enhanced transcription tone (Hz)",
     )
     enhanced_end_frequency: float = Field(
-        default=1400.0, description="End frequency for enhanced transcription tone (Hz)"
+        default=800.0, description="End frequency for enhanced transcription tone (Hz)"
     )
     duration: float = Field(default=0.3, description="Sound duration in seconds")
 

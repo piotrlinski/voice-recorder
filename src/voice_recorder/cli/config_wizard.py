@@ -230,43 +230,91 @@ class ConfigurationWizard:
             print()
             return SoundConfig(enabled=False)
 
-        # Sound type
+        # Disable start sounds option
         print()
-        print("Choose sound type:")
-        print("1. Tone (Recommended) - Pleasant ascending/descending tones")
-        print("2. Beep - Simple system beep")
-        print()
-
-        while True:
-            choice = input("Select sound type (1 or 2): ").strip()
-            if choice == "1":
-                sound_type = SoundType.TONE
-                break
-            elif choice == "2":
-                sound_type = SoundType.BEEP
-                break
-            else:
-                print("❌ Please enter 1 or 2")
+        disable_start_sounds = self._get_yes_no(
+            "Disable start recording sounds (keep stop sounds)? (y/N): ", False
+        )
 
         # Volume
         print()
-        volume = self._get_float_input(
-            "Sound volume (0.0-1.0, default: 0.15): ",
-            default=0.15,
-            min_val=0.0,
+        volume = self._get_int_input(
+            "Sound volume (0-100, default: 15): ",
+            default=15,
+            min_val=0,
+            max_val=100,
+        )
+
+        # Sound type for basic transcription
+        print()
+        print("Choose sound type for basic transcription:")
+        print("1. Tone (Recommended) - Pleasant sweep tones")
+        print("2. Beep - Simple system beep")
+        print("3. None - No sound")
+        print()
+
+        while True:
+            choice = input("Select basic sound type (1, 2, or 3): ").strip()
+            if choice == "1":
+                basic_sound_type = SoundType.TONE
+                break
+            elif choice == "2":
+                basic_sound_type = SoundType.BEEP
+                break
+            elif choice == "3":
+                basic_sound_type = SoundType.NONE
+                break
+            else:
+                print("❌ Please enter 1, 2, or 3")
+
+        # Sound type for enhanced transcription
+        print()
+        print("Choose sound type for enhanced transcription:")
+        print("1. Tone (Recommended) - Pleasant sweep tones")
+        print("2. Beep - Simple system beep")
+        print("3. None - No sound")
+        print()
+
+        while True:
+            choice = input("Select enhanced sound type (1, 2, or 3): ").strip()
+            if choice == "1":
+                enhanced_sound_type = SoundType.TONE
+                break
+            elif choice == "2":
+                enhanced_sound_type = SoundType.BEEP
+                break
+            elif choice == "3":
+                enhanced_sound_type = SoundType.NONE
+                break
+            else:
+                print("❌ Please enter 1, 2, or 3")
+
+        # Duration
+        print()
+        duration = self._get_float_input(
+            "Sound duration in seconds (0.1-1.0, default: 0.3): ",
+            default=0.3,
+            min_val=0.1,
             max_val=1.0,
         )
 
-        print(f"✅ Sound: {sound_type.value} at {int(volume*100)}% volume")
+        print(f"✅ Sound: Basic={basic_sound_type.value}, Enhanced={enhanced_sound_type.value}")
+        print(f"   Volume: {volume}%, Duration: {duration}s")
+        if disable_start_sounds:
+            print("   Start sounds: Disabled (stop sounds only)")
         print()
 
         return SoundConfig(
             enabled=True,
-            sound_type=sound_type,
+            disable_start_sounds=disable_start_sounds,
             volume=volume,
-            start_frequency=800.0,
-            end_frequency=1200.0,
-            duration=0.3,
+            basic_sound_type=basic_sound_type,
+            basic_start_frequency=600.0,
+            basic_end_frequency=800.0,
+            enhanced_sound_type=enhanced_sound_type,
+            enhanced_start_frequency=1000.0,
+            enhanced_end_frequency=1200.0,
+            duration=duration,
         )
 
     def _configure_audio(self) -> AudioConfig:
