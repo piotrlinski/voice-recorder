@@ -24,6 +24,16 @@ class AudioRecorderInterface(ABC):
         """Check if recording is active."""
         pass
 
+    @abstractmethod
+    def play_start_beep(self, recording_type: str = "basic") -> None:
+        """Play start recording beep."""
+        pass
+
+    @abstractmethod
+    def play_stop_beep(self, recording_type: str = "basic") -> None:
+        """Play stop recording beep."""
+        pass
+
 
 class TranscriptionServiceInterface(ABC):
     """Interface for transcription services."""

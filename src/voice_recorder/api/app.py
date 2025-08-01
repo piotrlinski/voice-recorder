@@ -47,7 +47,8 @@ class VoiceRecorderApp:
 
         # Initialize infrastructure components
         self.audio_recorder: AudioRecorderInterface = PyAudioRecorder(
-            console=self.console
+            console=self.console,
+            sound_config=self.config.sound
         )
         self.transcription_service: TranscriptionServiceInterface = (
             TranscriptionServiceFactory.create_service(

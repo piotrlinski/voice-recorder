@@ -169,15 +169,16 @@ class VoiceRecorderService:
             self.current_session = self.session_manager.create_session()
             self.current_session.state = RecordingState.RECORDING
             self.current_session.start_time = datetime.now()
+            
             # Start audio recording
             session_id = self.audio_recorder.start_recording(self.config.audio)
             self.current_session.id = session_id
+            
+            # Play start beep through audio recorder
+            self.audio_recorder.play_start_beep("basic")
+            
             # Update session
             self.session_manager.update_session(self.current_session)
-
-            # Play basic transcription sound (only if start sounds are enabled)
-            if not self.config.sound.disable_start_sounds:
-                self._play_basic_start_sound()
 
             # Recording started notification
             self.console.info(f"Basic recording started (Session: {session_id})")
@@ -201,6 +202,10 @@ class VoiceRecorderService:
             self.current_session.state = RecordingState.PROCESSING
             self.current_session.end_time = datetime.now()
             self.session_manager.update_session(self.current_session)
+            
+            # Play stop beep through audio recorder
+            self.audio_recorder.play_stop_beep("basic")
+            
             # Stop recording
             audio_file_path = self.audio_recorder.stop_recording(
                 self.current_session.id
@@ -214,8 +219,6 @@ class VoiceRecorderService:
             # Update session with audio file path
             self.current_session.audio_file_path = audio_file_path
             self.session_manager.update_session(self.current_session)
-            # Audio feedback for basic recording
-            self._play_basic_stop_sound()
 
             # Processing notification
             self.console.info("Basic recording stopped. Transcribing...")
@@ -284,12 +287,11 @@ class VoiceRecorderService:
             session_id = self.audio_recorder.start_recording(self.config.audio)
             self.current_session.id = session_id
 
+            # Play start beep through audio recorder
+            self.audio_recorder.play_start_beep("enhanced")
+
             # Update session
             self.session_manager.update_session(self.current_session)
-
-            # Play enhanced transcription sound (only if start sounds are enabled)
-            if not self.config.sound.disable_start_sounds:
-                self._play_enhanced_start_sound()
 
             # Enhanced recording started notification
             self.console.info(f"Enhanced recording started (Session: {session_id})")
@@ -314,6 +316,9 @@ class VoiceRecorderService:
             self.current_session.end_time = datetime.now()
             self.session_manager.update_session(self.current_session)
 
+            # Play stop beep through audio recorder
+            self.audio_recorder.play_stop_beep("enhanced")
+
             # Stop recording
             audio_file_path = self.audio_recorder.stop_recording(
                 self.current_session.id
@@ -328,9 +333,6 @@ class VoiceRecorderService:
             # Update session with audio file path
             self.current_session.audio_file_path = audio_file_path
             self.session_manager.update_session(self.current_session)
-
-            # Audio feedback for enhanced recording
-            self._play_enhanced_stop_sound()
 
             # Processing notification
             self.console.info(
@@ -438,35 +440,3 @@ class VoiceRecorderService:
     def get_session_history(self) -> list[RecordingSession]:
         """Get all recording sessions."""
         return self.session_manager.get_all_sessions()
-
-    def _play_basic_start_sound(self) -> None:
-        """Play start sound for basic transcription."""
-        if hasattr(self.audio_feedback, "play_basic_start_beep"):
-            self.audio_feedback.play_basic_start_beep()
-        else:
-            # Fallback to regular beep
-            self.audio_feedback.play_start_beep()
-
-    def _play_basic_stop_sound(self) -> None:
-        """Play stop sound for basic transcription."""
-        if hasattr(self.audio_feedback, "play_basic_stop_beep"):
-            self.audio_feedback.play_basic_stop_beep()
-        else:
-            # Fallback to regular beep
-            self.audio_feedback.play_stop_beep()
-
-    def _play_enhanced_start_sound(self) -> None:
-        """Play start sound for enhanced transcription."""
-        if hasattr(self.audio_feedback, "play_enhanced_start_beep"):
-            self.audio_feedback.play_enhanced_start_beep()
-        else:
-            # Fallback to regular beep
-            self.audio_feedback.play_start_beep()
-
-    def _play_enhanced_stop_sound(self) -> None:
-        """Play stop sound for enhanced transcription."""
-        if hasattr(self.audio_feedback, "play_enhanced_stop_beep"):
-            self.audio_feedback.play_enhanced_stop_beep()
-        else:
-            # Fallback to regular beep
-            self.audio_feedback.play_stop_beep()

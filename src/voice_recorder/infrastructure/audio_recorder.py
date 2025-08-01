@@ -4,18 +4,22 @@ Audio recording infrastructure implementations.
 
 import os
 import tempfile
+import math
+import struct
+import subprocess
 from typing import Any, Dict, Optional
 
 from ..domain.interfaces import AudioRecorderInterface, ConsoleInterface
-from ..domain.models import AudioConfig
+from ..domain.models import AudioConfig, SoundConfig, SoundType
 
 
 class PyAudioRecorder(AudioRecorderInterface):
-    """PyAudio-based audio recorder implementation."""
+    """PyAudio-based audio recorder implementation with built-in audio feedback."""
 
-    def __init__(self, console: ConsoleInterface | None = None):
+    def __init__(self, console: ConsoleInterface | None = None, sound_config: Optional[SoundConfig] = None):
         """Initialize PyAudio recorder."""
         self.console = console
+        self.sound_config = sound_config or SoundConfig()
         self.pyaudio_available = False
         self.pyaudio: Optional[Any] = None
         self.pa_continue: Optional[Any] = None
@@ -38,6 +42,159 @@ class PyAudioRecorder(AudioRecorderInterface):
             if self.console:
                 self.console.error(f"PyAudio initialization failed: {e}")
 
+    def _generate_tone(self, frequency: float, duration: float, volume: float = None) -> bytes:
+        """Generate a tone at the specified frequency."""
+        if volume is None:
+            volume = self.sound_config.volume
+
+        # Convert volume from 0-100 to 0.0-1.0 range
+        volume_scale = volume / 100.0
+
+        sample_rate = 44100
+        num_samples = int(sample_rate * duration)
+
+        audio_data = bytearray()
+        for i in range(num_samples):
+            # Generate sine wave
+            t = i / sample_rate
+            sine_value = math.sin(2.0 * math.pi * frequency * t)
+            # Convert to 16-bit integer and apply volume
+            sample = int(sine_value * volume_scale * 32767)
+            # Ensure sample is within valid range
+            sample = max(-32768, min(32767, sample))
+            audio_data.extend(struct.pack("<h", sample))
+
+        return bytes(audio_data)
+
+    def _generate_sweep_tone(self, start_freq: float, end_freq: float, duration: float, volume: float = None) -> bytes:
+        """Generate a frequency sweep tone."""
+        if volume is None:
+            volume = self.sound_config.volume
+
+        # Convert volume from 0-100 to 0.0-1.0 range
+        volume_scale = volume / 100.0
+
+        sample_rate = 44100
+        num_samples = int(sample_rate * duration)
+
+        audio_data = bytearray()
+        for i in range(num_samples):
+            # Calculate current frequency (linear sweep)
+            progress = i / num_samples
+            current_freq = start_freq + (end_freq - start_freq) * progress
+
+            # Generate sine wave at current frequency
+            t = i / sample_rate
+            sine_value = math.sin(2.0 * math.pi * current_freq * t)
+            # Convert to 16-bit integer and apply volume
+            sample = int(sine_value * volume_scale * 32767)
+            # Ensure sample is within valid range
+            sample = max(-32768, min(32767, sample))
+            audio_data.extend(struct.pack("<h", sample))
+
+        return bytes(audio_data)
+
+    def _play_audio(self, audio_data: bytes) -> None:
+        """Play audio data using system command."""
+        if not self.sound_config.enabled:
+            return
+
+        try:
+            # Create temporary WAV file
+            temp_file = tempfile.NamedTemporaryFile(suffix=".wav", delete=False)
+            temp_file_path = temp_file.name
+            temp_file.close()
+
+            # Write WAV file
+            import wave
+
+            with wave.open(temp_file_path, "wb") as wav_file:
+                wav_file.setnchannels(1)  # Mono
+                wav_file.setsampwidth(2)  # 16-bit
+                wav_file.setframerate(44100)  # Sample rate
+                wav_file.writeframes(audio_data)
+
+            # Play audio using afplay (macOS)
+            subprocess.run(["afplay", temp_file_path], check=True, capture_output=True)
+
+            # Clean up
+            try:
+                os.unlink(temp_file_path)
+            except:
+                pass
+
+        except Exception as e:
+            if self.console:
+                self.console.warning(f"Audio playback failed: {e}")
+            # Fallback to system beep
+            print("\a", end="", flush=True)
+
+    def play_start_beep(self, recording_type: str = "basic") -> None:
+        """Play start recording beep."""
+        if not self.sound_config.enabled:
+            return
+
+        try:
+            if recording_type == "basic":
+                if self.sound_config.basic_sound_type == SoundType.TONE:
+                    # Generate ascending sweep tone
+                    audio_data = self._generate_sweep_tone(
+                        self.sound_config.basic_start_frequency,
+                        self.sound_config.basic_end_frequency,
+                        self.sound_config.duration,
+                    )
+                    self._play_audio(audio_data)
+                elif self.sound_config.basic_sound_type == SoundType.BEEP:
+                    print("\a", end="", flush=True)
+            else:  # enhanced
+                if self.sound_config.enhanced_sound_type == SoundType.TONE:
+                    # Generate ascending sweep tone
+                    audio_data = self._generate_sweep_tone(
+                        self.sound_config.enhanced_start_frequency,
+                        self.sound_config.enhanced_end_frequency,
+                        self.sound_config.duration,
+                    )
+                    self._play_audio(audio_data)
+                elif self.sound_config.enhanced_sound_type == SoundType.BEEP:
+                    print("\a", end="", flush=True)
+
+        except Exception as e:
+            if self.console:
+                self.console.error(f"Start beep failed: {e}")
+
+    def play_stop_beep(self, recording_type: str = "basic") -> None:
+        """Play stop recording beep."""
+        if not self.sound_config.enabled:
+            return
+
+        try:
+            if recording_type == "basic":
+                if self.sound_config.basic_sound_type == SoundType.TONE:
+                    # Generate descending sweep tone
+                    audio_data = self._generate_sweep_tone(
+                        self.sound_config.basic_end_frequency,
+                        self.sound_config.basic_start_frequency,
+                        self.sound_config.duration,
+                    )
+                    self._play_audio(audio_data)
+                elif self.sound_config.basic_sound_type == SoundType.BEEP:
+                    print("\a", end="", flush=True)
+            else:  # enhanced
+                if self.sound_config.enhanced_sound_type == SoundType.TONE:
+                    # Generate descending sweep tone
+                    audio_data = self._generate_sweep_tone(
+                        self.sound_config.enhanced_end_frequency,
+                        self.sound_config.enhanced_start_frequency,
+                        self.sound_config.duration,
+                    )
+                    self._play_audio(audio_data)
+                elif self.sound_config.enhanced_sound_type == SoundType.BEEP:
+                    print("\a", end="", flush=True)
+
+        except Exception as e:
+            if self.console:
+                self.console.error(f"Stop beep failed: {e}")
+
     def _create_audio_callback(self, session_id: str):
         """Create a proper audio callback closure."""
 
@@ -55,7 +212,7 @@ class PyAudioRecorder(AudioRecorderInterface):
         return audio_callback
 
     def start_recording(self, config: AudioConfig) -> str:
-        """Start recording with PyAudio."""
+        """Start recording with PyAudio and play start beep."""
         if not self.pyaudio_available or self.pyaudio is None:
             raise RuntimeError("PyAudio not available")
         session_id = f"pyaudio_{len(self.audio_streams)}"
