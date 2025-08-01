@@ -75,20 +75,20 @@ Please improve the following transcribed text by fixing grammar, punctuation, an
 
 You can customize the audio feedback sounds to distinguish between basic and enhanced transcription:
 
-**Current Configuration** (Consistent Sounds):
+**Current Configuration** (Sweep Tones):
 ```ini
 [sound]
 enabled = True
 volume = 5
 
-# Basic transcription - Same 800 Hz tone for start and stop
+# Basic transcription - Sweep tone (600→800 Hz) for both start and stop
 basic_sound_type = tone
-basic_start_frequency = 800.0
+basic_start_frequency = 600.0
 basic_end_frequency = 800.0
 
-# Enhanced transcription - Same 1200 Hz tone for start and stop
+# Enhanced transcription - Sweep tone (1000→1200 Hz) for both start and stop
 enhanced_sound_type = tone
-enhanced_start_frequency = 1200.0
+enhanced_start_frequency = 1000.0
 enhanced_end_frequency = 1200.0
 
 duration = 0.3
@@ -105,19 +105,20 @@ basic_sound_type = beep
 basic_start_frequency = 800.0
 basic_end_frequency = 800.0
 
-# Enhanced transcription - Tone for both start and stop
+# Enhanced transcription - Sweep tone for both start and stop
 enhanced_sound_type = tone
-enhanced_start_frequency = 1200.0
+enhanced_start_frequency = 1000.0
 enhanced_end_frequency = 1200.0
 
 duration = 0.3
 ```
 
 **Sound Behavior**:
-- **Start and Stop**: Use the same sound (consistent experience)
-- **Basic Mode**: Lower frequency (800 Hz) - deeper sound
-- **Enhanced Mode**: Higher frequency (1200 Hz) - brighter sound
-- **Distinction**: Different frequencies help identify which mode you're using
+- **Start**: Ascending sweep tone (low→high frequency)
+- **Stop**: Descending sweep tone (high→low frequency)
+- **Basic Mode**: Lower frequency range (600→800 Hz) - deeper sweep
+- **Enhanced Mode**: Higher frequency range (1000→1200 Hz) - brighter sweep
+- **Distinction**: Different frequency ranges help identify which mode you're using
 
 **Sound Type Options**:
 - `tone` - Custom frequency tone (consistent for start/stop)
