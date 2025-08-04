@@ -1,0 +1,197 @@
+name: 🏥 Documentation Health Check
+
+on:
+  schedule:
+    # Run daily at 6 AM UTC
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  health-check:
+    name: 🏥 Health Check
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 🔍 Check Documentation Site
+      id: health-check
+      run: |
+        echo "🏥 Documentation Health Check"
+        echo "============================"
+        
+        base_url="https://piotrlinski.github.io/voice-recorder"
+        
+        # Test critical pages
+        pages=(
+          ""                    # Homepage
+          "/index.html"        # Explicit index
+          "/search.html"       # Search
+          "/genindex.html"     # General index
+          "/api/index.html"    # API docs
+          "/overview.html"     # Overview
+          "/installation.html" # Installation
+          "/quickstart.html"   # Quick start
+          "/configuration.html" # Configuration
+        )
+        
+        failed_pages=()
+        total_pages=${#pages[@]}
+        successful_pages=0
+        
+        for page in "${pages[@]}"; do
+          url="${base_url}${page}"
+          echo "Testing: $url"
+          
+          if curl -sSf -o /dev/null -w "%{http_code}" "$url" | grep -q "200"; then
+            echo "✅ $url - OK"
+            ((successful_pages++))
+          else
+            echo "❌ $url - FAILED"
+            failed_pages+=("$url")
+          fi
+        done
+        
+        # Generate report
+        echo "health_status=$([[ ${#failed_pages[@]} -eq 0 ]] && echo "healthy" || echo "unhealthy")" >> $GITHUB_OUTPUT
+        echo "total_pages=$total_pages" >> $GITHUB_OUTPUT  
+        echo "successful_pages=$successful_pages" >> $GITHUB_OUTPUT
+        echo "failed_pages=${#failed_pages[@]}" >> $GITHUB_OUTPUT
+        
+        # Test search functionality
+        echo ""
+        echo "🔍 Testing search functionality..."
+        search_url="${base_url}/search.html"
+        if curl -sSf "$search_url" | grep -q "searchindex.js"; then
+          echo "✅ Search index found"
+          echo "search_working=true" >> $GITHUB_OUTPUT
+        else
+          echo "❌ Search functionality may be broken"
+          echo "search_working=false" >> $GITHUB_OUTPUT
+        fi
+        
+        # Test API documentation
+        echo ""
+        echo "📚 Testing API documentation..."
+        api_url="${base_url}/api/index.html"
+        if curl -sSf "$api_url" | grep -q "voice_recorder"; then
+          echo "✅ API documentation accessible"
+          echo "api_docs_working=true" >> $GITHUB_OUTPUT
+        else
+          echo "❌ API documentation may be broken"
+          echo "api_docs_working=false" >> $GITHUB_OUTPUT
+        fi
+        
+        # Performance check
+        echo ""
+        echo "⚡ Performance check..."
+        load_time=$(curl -w "%{time_total}" -o /dev/null -s "$base_url")
+        echo "🕐 Homepage load time: ${load_time}s"
+        echo "load_time=$load_time" >> $GITHUB_OUTPUT
+        
+        # Mobile responsiveness check
+        echo ""
+        echo "📱 Mobile responsiveness check..."
+        if curl -sSf "$base_url" | grep -q "viewport"; then
+          echo "✅ Mobile viewport configured"
+          echo "mobile_friendly=true" >> $GITHUB_OUTPUT
+        else
+          echo "❌ Mobile viewport not found"
+          echo "mobile_friendly=false" >> $GITHUB_OUTPUT
+        fi
+        
+    - name: 📊 Generate Health Report
+      run: |
+        echo "## 🏥 Documentation Health Report" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**Overall Status:** $([[ "${{ steps.health-check.outputs.health_status }}" == "healthy" ]] && echo "🟢 HEALTHY" || echo "🔴 UNHEALTHY")" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 📊 Page Accessibility" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ Successful: ${{ steps.health-check.outputs.successful_pages }}/${{ steps.health-check.outputs.total_pages }}" >> $GITHUB_STEP_SUMMARY
+        echo "- ❌ Failed: ${{ steps.health-check.outputs.failed_pages }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 🔍 Feature Status" >> $GITHUB_STEP_SUMMARY
+        echo "| Feature | Status |" >> $GITHUB_STEP_SUMMARY
+        echo "|---------|---------|" >> $GITHUB_STEP_SUMMARY
+        echo "| 🔍 Search | $([[ "${{ steps.health-check.outputs.search_working }}" == "true" ]] && echo "✅ Working" || echo "❌ Broken") |" >> $GITHUB_STEP_SUMMARY
+        echo "| 📚 API Docs | $([[ "${{ steps.health-check.outputs.api_docs_working }}" == "true" ]] && echo "✅ Working" || echo "❌ Broken") |" >> $GITHUB_STEP_SUMMARY
+        echo "| 📱 Mobile | $([[ "${{ steps.health-check.outputs.mobile_friendly }}" == "true" ]] && echo "✅ Responsive" || echo "❌ Not Responsive") |" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### ⚡ Performance" >> $GITHUB_STEP_SUMMARY
+        echo "- 🕐 Homepage Load Time: ${{ steps.health-check.outputs.load_time }}s" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 🔗 Quick Links" >> $GITHUB_STEP_SUMMARY
+        echo "- 🏠 [Documentation Home](https://piotrlinski.github.io/voice-recorder/)" >> $GITHUB_STEP_SUMMARY
+        echo "- 📚 [API Reference](https://piotrlinski.github.io/voice-recorder/api/index.html)" >> $GITHUB_STEP_SUMMARY
+        echo "- 🔍 [Search](https://piotrlinski.github.io/voice-recorder/search.html)" >> $GITHUB_STEP_SUMMARY
+        
+    - name: 🚨 Create Issue for Failed Health Check
+      if: steps.health-check.outputs.health_status == 'unhealthy'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const title = `🚨 Documentation Health Check Failed - ${new Date().toISOString().split('T')[0]}`;
+          const body = `
+          ## 🏥 Documentation Health Check Report
+          
+          **Status:** 🔴 UNHEALTHY
+          **Date:** ${new Date().toISOString()}
+          **Workflow:** [Health Check Run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+          
+          ### 📊 Summary
+          - **Total Pages Tested:** ${{ steps.health-check.outputs.total_pages }}
+          - **Successful:** ${{ steps.health-check.outputs.successful_pages }}
+          - **Failed:** ${{ steps.health-check.outputs.failed_pages }}
+          
+          ### 🔍 Feature Status
+          - **Search:** ${{ steps.health-check.outputs.search_working == 'true' && '✅ Working' || '❌ Broken' }}
+          - **API Docs:** ${{ steps.health-check.outputs.api_docs_working == 'true' && '✅ Working' || '❌ Broken' }}
+          - **Mobile Friendly:** ${{ steps.health-check.outputs.mobile_friendly == 'true' && '✅ Responsive' || '❌ Not Responsive' }}
+          
+          ### 🔧 Recommended Actions
+          1. Check GitHub Pages deployment status
+          2. Verify documentation build process
+          3. Test documentation locally with \`make docs-html\`
+          4. Review recent changes that might affect documentation
+          
+          ### 🔗 Useful Links
+          - [Documentation Site](https://piotrlinski.github.io/voice-recorder/)
+          - [GitHub Pages Settings](https://github.com/${{ github.repository }}/settings/pages)
+          - [Recent Commits](https://github.com/${{ github.repository }}/commits/main)
+          
+          ---
+          *This issue was automatically created by the Documentation Health Check workflow.*
+          `;
+          
+          // Check if issue already exists
+          const issues = await github.rest.issues.listForRepo({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            state: 'open',
+            labels: 'documentation,health-check'
+          });
+          
+          const existingIssue = issues.data.find(issue => 
+            issue.title.includes('Documentation Health Check Failed')
+          );
+          
+          if (existingIssue) {
+            // Update existing issue
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: existingIssue.number,
+              body: `## 🔄 Health Check Update\n\n${body}`
+            });
+          } else {
+            // Create new issue
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: title,
+              body: body,
+              labels: ['documentation', 'health-check', 'bug']
+            });
+          }

@@ -20,7 +20,7 @@ Or find the exact path with::
     voice-recorder config path
 
 Complete Configuration Reference
--------------------------------
+---------------------------------
 
 Here's a complete configuration file with all available options:
 

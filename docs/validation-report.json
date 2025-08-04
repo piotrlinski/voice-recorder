@@ -1,0 +1,63 @@
+{
+  "validation_status": "failed",
+  "summary": {
+    "total_issues": 7,
+    "errors": 6,
+    "warnings": 1
+  },
+  "statistics": {
+    "total_html_files": 15,
+    "total_size_mb": 5.26,
+    "broken_links": 0,
+    "missing_meta": 0,
+    "accessibility_issues": 0
+  },
+  "issues": [
+    {
+      "severity": "error",
+      "category": "structure",
+      "message": "Missing required file: index.html",
+      "file": ""
+    },
+    {
+      "severity": "error",
+      "category": "structure",
+      "message": "Missing required file: search.html",
+      "file": ""
+    },
+    {
+      "severity": "error",
+      "category": "structure",
+      "message": "Missing required file: genindex.html",
+      "file": ""
+    },
+    {
+      "severity": "error",
+      "category": "structure",
+      "message": "Missing required file: _static/theme.css",
+      "file": ""
+    },
+    {
+      "severity": "error",
+      "category": "structure",
+      "message": "Missing required file: searchindex.js",
+      "file": ""
+    },
+    {
+      "severity": "error",
+      "category": "search",
+      "message": "Missing search.html",
+      "file": ""
+    },
+    {
+      "severity": "warning",
+      "category": "api",
+      "message": "Missing API documentation index",
+      "file": ""
+    }
+  ],
+  "recommendations": [
+    "\u274c Fix all errors before deployment",
+    "\u26a0\ufe0f Consider addressing warnings for better quality"
+  ]
+}
