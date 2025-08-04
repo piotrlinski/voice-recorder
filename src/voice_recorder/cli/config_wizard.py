@@ -94,10 +94,12 @@ class ConfigurationWizard:
                 enhanced_prompt = self._get_enhanced_transcription_prompt()
                 return TranscriptionConfig(
                     mode=mode,
-                    openai=TranscriptionConfig.openai.model_validate({
-                        "api_key": api_key,
-                        "enhanced_transcription_prompt": enhanced_prompt
-                    })
+                    openai=TranscriptionConfig.openai.model_validate(
+                        {
+                            "api_key": api_key,
+                            "enhanced_transcription_prompt": enhanced_prompt,
+                        }
+                    ),
                 )
             elif choice == "2":
                 mode = TranscriptionMode.LOCAL
@@ -105,10 +107,12 @@ class ConfigurationWizard:
                 enhanced_prompt = self._get_enhanced_transcription_prompt()
                 return TranscriptionConfig(
                     mode=mode,
-                    local=TranscriptionConfig.local.model_validate({
-                        "whisper_model": local_model,
-                        "enhanced_transcription_prompt": enhanced_prompt
-                    })
+                    local=TranscriptionConfig.local.model_validate(
+                        {
+                            "whisper_model": local_model,
+                            "enhanced_transcription_prompt": enhanced_prompt,
+                        }
+                    ),
                 )
             else:
                 print("❌ Please enter 1 or 2")
@@ -207,7 +211,6 @@ class ConfigurationWizard:
 
         return basic_key, enhanced_key, description
 
-
     def _configure_audio(self) -> AudioConfig:
         """Configure audio recording settings"""
         print("🎙️  AUDIO RECORDING SETTINGS")
@@ -278,7 +281,9 @@ class ConfigurationWizard:
         print(f"   🗣️  Transcription: {config.transcription.mode.value}")
         print(f"   ⌨️  Basic Key: {config.controls.basic_key}")
         print(f"   ⌨️  Enhanced Key: {config.controls.enhanced_key}")
-        print(f"   📋 Auto-paste: {'Enabled' if config.general.auto_paste else 'Disabled'}")
+        print(
+            f"   📋 Auto-paste: {'Enabled' if config.general.auto_paste else 'Disabled'}"
+        )
         print()
         print("📁 Configuration saved to:")
         print(f"   {self.config_manager.get_config_path()}")
@@ -372,26 +377,24 @@ class ConfigurationWizard:
         print("This prompt will be used to enhance your transcribed text with AI.")
         print("You can customize how the AI improves your text.")
         print()
-        
-        use_default = self._get_yes_no(
-            "Use default enhancement prompt? (Y/n): ", True
-        )
-        
+
+        use_default = self._get_yes_no("Use default enhancement prompt? (Y/n): ", True)
+
         if use_default:
             default_prompt = "Please improve the following transcribed text by fixing grammar, punctuation, and making it more coherent while preserving the original meaning. Only return the improved text without any explanations or additional commentary."
             print("✅ Using default enhancement prompt")
             return default_prompt
-        
+
         print()
         print("📝 Custom Enhancement Prompt")
         print("Enter your custom prompt for text enhancement:")
         print("(The transcribed text will be appended to this prompt)")
         print()
-        
+
         custom_prompt = input("Enter custom prompt: ").strip()
         if not custom_prompt:
             print("⚠️  No prompt provided, using default")
             return "Please improve the following transcribed text by fixing grammar, punctuation, and making it more coherent while preserving the original meaning. Only return the improved text without any explanations or additional commentary."
-        
+
         print("✅ Custom enhancement prompt saved")
         return custom_prompt

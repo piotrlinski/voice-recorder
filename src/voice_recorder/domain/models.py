@@ -15,9 +15,9 @@ from pydantic import BaseModel, Field
 
 class RecordingState(str, Enum):
     """Recording state enumeration.
-    
+
     Represents the various states a recording session can be in during its lifecycle.
-    
+
     Attributes:
         IDLE: Session is created but no recording has started
         RECORDING: Audio is currently being recorded
@@ -60,7 +60,9 @@ class HotkeyConfig(BaseModel):
     """Hotkey configuration for recording controls."""
 
     key: str = Field(description="Primary key for the hotkey")
-    modifiers: List[str] = Field(default_factory=list, description="Modifier keys (ctrl, alt, shift, etc.)")
+    modifiers: List[str] = Field(
+        default_factory=list, description="Modifier keys (ctrl, alt, shift, etc.)"
+    )
     description: str = Field(description="Human-readable description of the hotkey")
 
 
@@ -74,7 +76,8 @@ class OpenAITranscriptionConfig(BaseModel):
         default="whisper-1", description="OpenAI Whisper model (hard-coded)"
     )
     gpt_model: str = Field(
-        default="gpt-3.5-turbo", description="OpenAI GPT model for enhancement (hard-coded)"
+        default="gpt-3.5-turbo",
+        description="OpenAI GPT model for enhancement (hard-coded)",
     )
     gpt_creativity: float = Field(
         default=0.3,
@@ -84,7 +87,7 @@ class OpenAITranscriptionConfig(BaseModel):
     )
     enhanced_transcription_prompt: str = Field(
         default="Please improve the following transcribed text by fixing grammar, punctuation, and making it more coherent while preserving the original meaning. Only return the improved text without any explanations or additional commentary.",
-        description="Custom prompt for enhanced transcription with GPT"
+        description="Custom prompt for enhanced transcription with GPT",
     )
 
 
@@ -108,7 +111,7 @@ class LocalTranscriptionConfig(BaseModel):
     )
     enhanced_transcription_prompt: str = Field(
         default="Please improve the following transcribed text by fixing grammar, punctuation, and making it more coherent while preserving the original meaning. Only return the improved text without any explanations or additional commentary.",
-        description="Custom prompt for enhanced transcription with GPT"
+        description="Custom prompt for enhanced transcription with GPT",
     )
 
 
@@ -127,8 +130,6 @@ class TranscriptionConfig(BaseModel):
         default_factory=LocalTranscriptionConfig,
         description="Local transcription configuration",
     )
-
-
 
 
 class AudioConfig(BaseModel):
@@ -184,8 +185,6 @@ class EnhancedTranscriptionResult(BaseModel):
     gpt_model: Optional[str] = Field(default=None, description="GPT model used")
 
 
-
-
 class ControlsConfig(BaseModel):
     """Recording controls configuration."""
 
@@ -203,17 +202,17 @@ class GeneralConfig(BaseModel):
 
 class ApplicationConfig(BaseModel):
     """Application configuration with nested transcription modes.
-    
+
     Main configuration model that contains all settings for the voice recorder
     application including transcription providers, hotkey controls, audio settings,
     and general application behavior.
-    
+
     Attributes:
         transcription: Transcription service configuration (OpenAI or local)
         controls: Hotkey configuration for basic and enhanced recording
         audio: Audio recording settings (sample rate, format, etc.)
         general: General application settings (auto-paste, etc.)
-        
+
     Example:
         >>> config = ApplicationConfig(
         ...     transcription=TranscriptionConfig(mode=TranscriptionMode.OPENAI),
@@ -295,9 +294,13 @@ class ApplicationConfig(BaseModel):
             def enhanced_config(self) -> EnhancedTranscriptionConfig:
                 # Update temperature from appropriate creativity setting based on mode
                 if self._config.mode == TranscriptionMode.OPENAI:
-                    self._enhanced_config._creativity = self._config.openai.gpt_creativity
+                    self._enhanced_config._creativity = (
+                        self._config.openai.gpt_creativity
+                    )
                 else:
-                    self._enhanced_config._creativity = self._config.local.ollama_creativity
+                    self._enhanced_config._creativity = (
+                        self._config.local.ollama_creativity
+                    )
                 return self._enhanced_config
 
         return TranscriptionConfigWrapper(self.transcription)
@@ -335,7 +338,6 @@ class ApplicationConfig(BaseModel):
                 return f"{self._controls.enhanced_key} key for enhanced transcription"
 
         return HotkeyConfigWrapper(self.controls)
-
 
     @property
     def auto_paste(self) -> bool:

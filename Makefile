@@ -12,7 +12,7 @@ BUILDDIR     = docs/_build
 help:
 	@$(SPHINXBUILD) -M help "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 
-.PHONY: help Makefile docs-clean docs-html docs-serve
+.PHONY: help Makefile docs-clean docs-html
 
 # Documentation targets
 docs-html:
@@ -25,11 +25,6 @@ docs-html:
 	@cp -r "$(BUILDDIR)/html"/* docs/
 	@rm -rf "$(BUILDDIR)"
 	@echo "Build finished. The HTML pages are in docs/."
-
-docs-serve: docs-html
-	@echo "Starting documentation server at http://localhost:8000"
-	@echo "Press Ctrl+C to stop the server"
-	@cd docs && python -m http.server 8000
 
 docs-clean:
 	@echo "Cleaning documentation build directory..."

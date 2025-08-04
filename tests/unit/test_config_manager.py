@@ -198,9 +198,8 @@ sample_rate = 8000
             )
 
             # Verify updates
+            assert updated_config.transcription.mode == TranscriptionMode.LOCAL
             assert (
-                updated_config.transcription.mode
-                == TranscriptionMode.LOCAL
-            )
-            assert updated_config.transcription.local.whisper_model == "small"  # base should be converted to small
+                updated_config.transcription.local.whisper_model == "small"
+            )  # base should be converted to small
             assert updated_config.audio.sample_rate == 22050

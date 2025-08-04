@@ -29,14 +29,14 @@ from ..domain.models import (
 
 class VoiceRecorderService:
     """Main voice recorder service orchestrating all components.
-    
+
     This service coordinates between audio recording, transcription, hotkey detection,
     text pasting, and session management to provide a complete voice recording solution.
-    
+
     The service supports two transcription modes:
     - Basic: Direct speech-to-text transcription
     - Enhanced: Speech-to-text with AI-powered text improvement
-    
+
     Attributes:
         audio_recorder: Interface for audio recording functionality
         transcription_service: Basic transcription service
@@ -50,11 +50,11 @@ class VoiceRecorderService:
         is_recording: Whether a recording is currently in progress
         hotkey_pressed: Whether a hotkey is currently pressed
         recording_type: Type of recording ('basic' or 'enhanced')
-    
+
     Example:
         >>> from voice_recorder.services.voice_recorder_service import VoiceRecorderService
         >>> from voice_recorder.domain.models import ApplicationConfig
-        >>> 
+        >>>
         >>> # Initialize with dependency injection
         >>> service = VoiceRecorderService(
         ...     audio_recorder=audio_recorder,
@@ -65,7 +65,7 @@ class VoiceRecorderService:
         ...     config=config,
         ...     console=console
         ... )
-        >>> 
+        >>>
         >>> # Start the service
         >>> service.start()
         >>> # Service will now listen for hotkey events
@@ -74,52 +74,96 @@ class VoiceRecorderService:
     @staticmethod
     def _is_meaningful_transcription(text: str) -> bool:
         """Check if transcription text contains meaningful content.
-        
+
         Args:
             text: The transcription text to validate
-            
+
         Returns:
             True if the text contains meaningful content, False otherwise
         """
         if not text or not text.strip():
             return False
-            
+
         # Clean the text
         cleaned_text = text.strip().lower()
-        
+
         # Check minimum length (at least 2 characters)
         if len(cleaned_text) < 2:
             return False
-            
+
         # Common empty/meaningless transcriptions from Whisper
         meaningless_phrases = {
-            "thank you", "thanks", "bye", "goodbye", "hello", "hi", "hey",
-            "um", "uh", "hmm", "ah", "oh", "okay", "ok", "yes", "no", 
-            "you", "the", "and", "a", "an", "to", "of", "in", "it", "is",
-            ".", ",", "?", "!", "-", "--", "...", " ",
-            "thank you for watching", "thank you for listening",
-            "music", "applause", "laughter", "silence", "noise",
-            "[music]", "[applause]", "[laughter]", "[silence]", "[noise]",
-            "(music)", "(applause)", "(laughter)", "(silence)", "(noise)"
+            "thank you",
+            "thanks",
+            "bye",
+            "goodbye",
+            "hello",
+            "hi",
+            "hey",
+            "um",
+            "uh",
+            "hmm",
+            "ah",
+            "oh",
+            "okay",
+            "ok",
+            "yes",
+            "no",
+            "you",
+            "the",
+            "and",
+            "a",
+            "an",
+            "to",
+            "of",
+            "in",
+            "it",
+            "is",
+            ".",
+            ",",
+            "?",
+            "!",
+            "-",
+            "--",
+            "...",
+            " ",
+            "thank you for watching",
+            "thank you for listening",
+            "music",
+            "applause",
+            "laughter",
+            "silence",
+            "noise",
+            "[music]",
+            "[applause]",
+            "[laughter]",
+            "[silence]",
+            "[noise]",
+            "(music)",
+            "(applause)",
+            "(laughter)",
+            "(silence)",
+            "(noise)",
         }
-        
+
         # Remove punctuation and extra spaces for comparison
         import re
-        text_for_comparison = re.sub(r'[^\w\s]', '', cleaned_text).strip()
-        
+
+        text_for_comparison = re.sub(r"[^\w\s]", "", cleaned_text).strip()
+
         # If after removing punctuation there's nothing left, it's not meaningful
         if not text_for_comparison:
             return False
-        
+
         # Check if it's just meaningless phrases
         if text_for_comparison in meaningless_phrases:
             return False
-            
+
         # Check if it's just single characters or very short words
         words = text_for_comparison.split()
         if len(words) == 1 and len(words[0]) <= 2:
             return False
-            
+
         # If we get here, it's likely meaningful content
         return True
 
@@ -137,18 +181,18 @@ class VoiceRecorderService:
         ) = None,
     ):
         """Initialize the voice recorder service.
-        
+
         Args:
             audio_recorder: Audio recording interface implementation
             transcription_service: Basic transcription service for speech-to-text
-            hotkey_listener: Hotkey detection and event handling service  
+            hotkey_listener: Hotkey detection and event handling service
             text_paster: Text insertion service for auto-paste functionality
             session_manager: Recording session management service
             config: Application configuration with transcription and control settings
             console: Logging and console output interface
             enhanced_transcription_service: Optional enhanced transcription service
                 that provides AI-powered text improvement capabilities
-                
+
         Note:
             All dependencies are injected following dependency inversion principle.
             The service will operate in basic mode only if enhanced_transcription_service
@@ -167,21 +211,21 @@ class VoiceRecorderService:
         self.is_recording = False
         self.hotkey_pressed = False
         self.recording_type = "basic"  # Track whether recording is basic or enhanced
-        
+
         # Threading for async processing
         self._processing_thread: Optional[threading.Thread] = None
         self._processing_lock = threading.Lock()
 
     def start(self) -> None:
         """Start the voice recorder service.
-        
+
         Initializes hotkey listeners and begins monitoring for recording events.
         The service will listen for both basic and enhanced transcription hotkeys
         as configured in the application config.
-        
+
         Raises:
             RuntimeError: If the hotkey listener fails to start or initialize
-            
+
         Note:
             This method is non-blocking. The service runs in the background
             and processes hotkey events asynchronously.
@@ -199,15 +243,15 @@ class VoiceRecorderService:
 
     def stop(self) -> None:
         """Stop the voice recorder service.
-        
+
         Gracefully shuts down the service by:
         1. Stopping any active recording
         2. Waiting for transcription processing to complete
         3. Stopping the hotkey listener
-        
+
         The method will wait up to 10 seconds for active transcription
         processing to complete before forcing shutdown.
-        
+
         Note:
             This method is blocking and will wait for clean shutdown.
             Any active recording will be properly saved and processed.
@@ -215,20 +259,24 @@ class VoiceRecorderService:
         try:
             if self.is_recording:
                 self._stop_current_recording()
-            
+
             # Wait for any ongoing processing to complete
             with self._processing_lock:
                 if self._processing_thread and self._processing_thread.is_alive():
-                    self.console.info("Waiting for transcription processing to complete...")
+                    self.console.info(
+                        "Waiting for transcription processing to complete..."
+                    )
                     # Release lock to allow processing to finish
                     pass
-            
+
             # Wait for thread to complete (with timeout)
             if self._processing_thread and self._processing_thread.is_alive():
                 self._processing_thread.join(timeout=10.0)  # Wait up to 10 seconds
                 if self._processing_thread.is_alive():
-                    self.console.warning("Transcription processing did not complete within timeout")
-            
+                    self.console.warning(
+                        "Transcription processing did not complete within timeout"
+                    )
+
             self.hotkey_listener.stop_listening()
         except Exception as e:
             self.console.error(f"Error stopping service: {e}")
@@ -322,12 +370,11 @@ class VoiceRecorderService:
             self.current_session = self.session_manager.create_session()
             self.current_session.state = RecordingState.RECORDING
             self.current_session.start_time = datetime.now()
-            
+
             # Start audio recording
             session_id = self.audio_recorder.start_recording(self.config.audio)
             self.current_session.id = session_id
-            
-            
+
             # Update session
             self.session_manager.update_session(self.current_session)
 
@@ -348,14 +395,13 @@ class VoiceRecorderService:
             or self.current_session.state != RecordingState.RECORDING
         ):
             return
-        
+
         try:
             # Update session state immediately
             self.current_session.state = RecordingState.PROCESSING
             self.current_session.end_time = datetime.now()
             self.session_manager.update_session(self.current_session)
-            
-            
+
             # Stop recording
             audio_file_path = self.audio_recorder.stop_recording(
                 self.current_session.id
@@ -368,27 +414,27 @@ class VoiceRecorderService:
                 self.is_recording = False
                 self.current_session = None
                 return
-                
+
             # Update session with audio file path
             self.current_session.audio_file_path = audio_file_path
             self.session_manager.update_session(self.current_session)
-            
+
             # Start async processing immediately
             self.console.info("Basic recording stopped. Starting transcription...")
-            
+
             # Launch processing in background thread
             with self._processing_lock:
                 if self._processing_thread and self._processing_thread.is_alive():
                     self.console.warning("Another processing operation is in progress")
                     return
-                
+
                 self._processing_thread = threading.Thread(
                     target=self._process_basic_transcription_async,
                     args=(audio_file_path, self.current_session.id),
-                    daemon=True
+                    daemon=True,
                 )
                 self._processing_thread.start()
-                
+
         except Exception as e:
             self.console.error(f"Error stopping basic recording: {e}")
             if self.current_session:
@@ -397,22 +443,26 @@ class VoiceRecorderService:
             # Reset recording state to allow new recordings
             self.is_recording = False
             self.current_session = None
-    
-    def _process_basic_transcription_async(self, audio_file_path: str, session_id: str) -> None:
+
+    def _process_basic_transcription_async(
+        self, audio_file_path: str, session_id: str
+    ) -> None:
         """Process basic transcription in background thread."""
         try:
             # Use regular transcription only for basic recording
             transcription_result = self.transcription_service.transcribe(
                 audio_file_path
             )
-            
+
             # Update session in thread-safe manner
             with self._processing_lock:
                 session = self.session_manager.get_session(session_id)
                 if not session:
-                    self.console.warning(f"Session {session_id} not found during processing")
+                    self.console.warning(
+                        f"Session {session_id} not found during processing"
+                    )
                     return
-                
+
                 if transcription_result and transcription_result.text.strip():
                     # Check if the transcription contains meaningful content
                     if self._is_meaningful_transcription(transcription_result.text):
@@ -423,11 +473,17 @@ class VoiceRecorderService:
 
                         # Auto-paste if enabled
                         if self.config.general.auto_paste:
-                            success = self.text_paster.paste_text(transcription_result.text)
+                            success = self.text_paster.paste_text(
+                                transcription_result.text
+                            )
                             if success:
-                                self.console.info("Basic transcription pasted successfully")
+                                self.console.info(
+                                    "Basic transcription pasted successfully"
+                                )
                             else:
-                                self.console.warning("Failed to paste basic transcription")
+                                self.console.warning(
+                                    "Failed to paste basic transcription"
+                                )
 
                         # Success notification
                         self.console.info(
@@ -435,7 +491,9 @@ class VoiceRecorderService:
                         )
                     else:
                         # Transcription exists but is not meaningful - don't paste
-                        self.console.info(f"Basic transcription contained no meaningful content: '{transcription_result.text}' - skipping paste")
+                        self.console.info(
+                            f"Basic transcription contained no meaningful content: '{transcription_result.text}' - skipping paste"
+                        )
                         session.transcript = "[No meaningful content detected]"
                         session.state = RecordingState.COMPLETED
                         self.session_manager.update_session(session)
@@ -444,7 +502,7 @@ class VoiceRecorderService:
                     self.console.warning("No transcription generated")
                     session.state = RecordingState.ERROR
                     self.session_manager.update_session(session)
-                
+
         except Exception as e:
             self.console.error(f"Error processing basic transcription: {e}")
             # Update session state to error in thread-safe manner
@@ -460,7 +518,7 @@ class VoiceRecorderService:
                     os.unlink(audio_file_path)
             except Exception as e:
                 self.console.warning(f"Failed to clean up audio file: {e}")
-            
+
             # Reset recording state - keep session for debugging
             with self._processing_lock:
                 self.is_recording = False
@@ -484,7 +542,6 @@ class VoiceRecorderService:
             session_id = self.audio_recorder.start_recording(self.config.audio)
             self.current_session.id = session_id
 
-
             # Update session
             self.session_manager.update_session(self.current_session)
 
@@ -505,13 +562,12 @@ class VoiceRecorderService:
             or self.current_session.state != RecordingState.RECORDING
         ):
             return
-        
+
         try:
             # Update session state immediately
             self.current_session.state = RecordingState.PROCESSING
             self.current_session.end_time = datetime.now()
             self.session_manager.update_session(self.current_session)
-
 
             # Stop recording
             audio_file_path = self.audio_recorder.stop_recording(
@@ -531,21 +587,23 @@ class VoiceRecorderService:
             self.session_manager.update_session(self.current_session)
 
             # Start async processing immediately
-            self.console.info("Enhanced recording stopped. Starting transcription and enhancement...")
-            
+            self.console.info(
+                "Enhanced recording stopped. Starting transcription and enhancement..."
+            )
+
             # Launch processing in background thread
             with self._processing_lock:
                 if self._processing_thread and self._processing_thread.is_alive():
                     self.console.warning("Another processing operation is in progress")
                     return
-                
+
                 self._processing_thread = threading.Thread(
                     target=self._process_enhanced_transcription_async,
                     args=(audio_file_path, self.current_session.id),
-                    daemon=True
+                    daemon=True,
                 )
                 self._processing_thread.start()
-                
+
         except Exception as e:
             self.console.error(f"Error stopping enhanced recording: {e}")
             if self.current_session:
@@ -554,8 +612,10 @@ class VoiceRecorderService:
             # Reset recording state to allow new recordings
             self.is_recording = False
             self.current_session = None
-    
-    def _process_enhanced_transcription_async(self, audio_file_path: str, session_id: str) -> None:
+
+    def _process_enhanced_transcription_async(
+        self, audio_file_path: str, session_id: str
+    ) -> None:
         """Process enhanced transcription in background thread."""
         try:
             # Use enhanced transcription with LLM
@@ -565,14 +625,16 @@ class VoiceRecorderService:
                         audio_file_path
                     )
                 )
-                
+
                 # Update session in thread-safe manner
                 with self._processing_lock:
                     session = self.session_manager.get_session(session_id)
                     if not session:
-                        self.console.warning(f"Session {session_id} not found during enhanced processing")
+                        self.console.warning(
+                            f"Session {session_id} not found during enhanced processing"
+                        )
                         return
-                    
+
                     # Check if the enhanced transcription contains meaningful content
                     # Note: enhanced_result is a TranscriptionResult, not EnhancedTranscriptionResult
                     if self._is_meaningful_transcription(enhanced_result.text):
@@ -596,7 +658,9 @@ class VoiceRecorderService:
                         )
                     else:
                         # Enhanced transcription exists but is not meaningful - don't paste
-                        self.console.info(f"Enhanced transcription contained no meaningful content: '{enhanced_result.text}' - skipping paste")
+                        self.console.info(
+                            f"Enhanced transcription contained no meaningful content: '{enhanced_result.text}' - skipping paste"
+                        )
                         session.transcript = "[No meaningful content detected]"
                         session.state = RecordingState.COMPLETED
                         self.session_manager.update_session(session)
@@ -609,14 +673,16 @@ class VoiceRecorderService:
                 transcription_result = self.transcription_service.transcribe(
                     audio_file_path
                 )
-                
+
                 # Update session in thread-safe manner
                 with self._processing_lock:
                     session = self.session_manager.get_session(session_id)
                     if not session:
-                        self.console.warning(f"Session {session_id} not found during fallback processing")
+                        self.console.warning(
+                            f"Session {session_id} not found during fallback processing"
+                        )
                         return
-                    
+
                     if transcription_result and transcription_result.text.strip():
                         # Check if the fallback transcription contains meaningful content
                         if self._is_meaningful_transcription(transcription_result.text):
@@ -625,18 +691,26 @@ class VoiceRecorderService:
                             self.session_manager.update_session(session)
 
                             if self.config.general.auto_paste:
-                                success = self.text_paster.paste_text(transcription_result.text)
+                                success = self.text_paster.paste_text(
+                                    transcription_result.text
+                                )
                                 if success:
-                                    self.console.info("Fallback transcription pasted successfully")
+                                    self.console.info(
+                                        "Fallback transcription pasted successfully"
+                                    )
                                 else:
-                                    self.console.warning("Failed to paste fallback transcription")
+                                    self.console.warning(
+                                        "Failed to paste fallback transcription"
+                                    )
 
                             self.console.info(
                                 f"Fallback transcription completed. Text: {transcription_result.text[:100]}..."
                             )
                         else:
                             # Fallback transcription exists but is not meaningful - don't paste
-                            self.console.info(f"Fallback transcription contained no meaningful content: '{transcription_result.text}' - skipping paste")
+                            self.console.info(
+                                f"Fallback transcription contained no meaningful content: '{transcription_result.text}' - skipping paste"
+                            )
                             session.transcript = "[No meaningful content detected]"
                             session.state = RecordingState.COMPLETED
                             self.session_manager.update_session(session)
@@ -660,7 +734,7 @@ class VoiceRecorderService:
                     os.unlink(audio_file_path)
             except Exception as e:
                 self.console.warning(f"Failed to clean up audio file: {e}")
-            
+
             # Reset recording state - keep session for debugging
             with self._processing_lock:
                 self.is_recording = False
@@ -677,7 +751,7 @@ class VoiceRecorderService:
             return
 
         # Determine which type of recording is active and call appropriate method
-        if hasattr(self, 'recording_type') and self.recording_type == "enhanced":
+        if hasattr(self, "recording_type") and self.recording_type == "enhanced":
             self._stop_enhanced_recording_and_process()
         else:
             # Default to basic recording

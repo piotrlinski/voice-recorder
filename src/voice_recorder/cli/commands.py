@@ -161,7 +161,6 @@ Examples:
             print(f"   Description: {config.hotkey_config.description}")
             print()
 
-
             print("🎙️  Audio:")
             print(f"   Sample Rate: {config.audio_config.sample_rate} Hz")
             print(f"   Channels: {config.audio_config.channels}")

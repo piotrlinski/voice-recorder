@@ -39,12 +39,14 @@ class InMemorySessionManager:
             # Find session by checking all sessions and update
             old_key = None
             for key, stored_session in self.sessions.items():
-                if (stored_session.start_time == session.start_time and 
-                    stored_session.state != RecordingState.COMPLETED):
+                if (
+                    stored_session.start_time == session.start_time
+                    and stored_session.state != RecordingState.COMPLETED
+                ):
                     # This is likely the same session with a changed ID
                     old_key = key
                     break
-            
+
             if old_key:
                 # Remove old entry and add with new ID
                 del self.sessions[old_key]
@@ -60,7 +62,9 @@ class InMemorySessionManager:
             if session:
                 self.console.debug(f"Found session {session_id}: state={session.state}")
             else:
-                self.console.debug(f"Session {session_id} not found. Available sessions: {list(self.sessions.keys())}")
+                self.console.debug(
+                    f"Session {session_id} not found. Available sessions: {list(self.sessions.keys())}"
+                )
         return session
 
     def get_all_sessions(self) -> List[RecordingSession]:

@@ -300,8 +300,8 @@ pip install -e ".[docs]"
 # Build documentation locally
 make docs-html
 
-# Serve locally for testing
-make docs-serve
+# Serve locally for testing (manual)
+cd docs && python -m http.server 8000
 # Open http://localhost:8000 in your browser
 ```
 
@@ -316,14 +316,14 @@ pip install -e ".[docs]"
 # Build HTML documentation
 make docs-html
 
-# Build and serve locally
-make docs-serve
-
 # Clean build directory
 make docs-clean
 
 # Show all available make targets
 make help
+
+# Serve locally for testing (manual)
+cd docs && python -m http.server 8000
 ```
 
 ### Documentation Structure

@@ -16,24 +16,30 @@ class TestVoiceRecorderApp:
     """Test cases for VoiceRecorderApp."""
 
     @patch.dict(os.environ, {"OPENAI_API_KEY": "test-key"})
-    @patch("src.voice_recorder.infrastructure.transcription.simple_factory.SimpleTranscriptionServiceFactory")
+    @patch(
+        "src.voice_recorder.infrastructure.transcription.simple_factory.SimpleTranscriptionServiceFactory"
+    )
     def test_init_with_config(self, mock_factory_class):
         """Test VoiceRecorderApp initialization with config."""
         mock_service = Mock()
         mock_enhanced_service = Mock()
         mock_factory_instance = Mock()
         mock_factory_instance.create_service.return_value = mock_service
-        mock_factory_instance.create_enhanced_service.return_value = mock_enhanced_service
+        mock_factory_instance.create_enhanced_service.return_value = (
+            mock_enhanced_service
+        )
         mock_factory_class.return_value = mock_factory_instance
 
         # Create config with valid API key
         from src.voice_recorder.domain.models import (
-            TranscriptionConfig, TranscriptionMode, OpenAITranscriptionConfig
+            TranscriptionConfig,
+            TranscriptionMode,
+            OpenAITranscriptionConfig,
         )
-        
+
         transcription_config = TranscriptionConfig(
             mode=TranscriptionMode.OPENAI,
-            openai=OpenAITranscriptionConfig(api_key="test-key")
+            openai=OpenAITranscriptionConfig(api_key="test-key"),
         )
         config = ApplicationConfig(transcription=transcription_config)
         app = VoiceRecorderApp(config)
@@ -47,21 +53,25 @@ class TestVoiceRecorderApp:
         "src.voice_recorder.infrastructure.transcription.simple_factory.SimpleTranscriptionServiceFactory.create_service"
     )
     @patch("src.voice_recorder.infrastructure.config_manager.ConfigManager.load_config")
-    def test_init_without_config(self, mock_load_config, mock_create_service, mock_create_enhanced_service):
+    def test_init_without_config(
+        self, mock_load_config, mock_create_service, mock_create_enhanced_service
+    ):
         """Test VoiceRecorderApp initialization without config."""
         mock_service = Mock()
         mock_enhanced_service = Mock()
         mock_create_service.return_value = mock_service
         mock_create_enhanced_service.return_value = mock_enhanced_service
-        
+
         # Mock config loading to return a valid config
         from src.voice_recorder.domain.models import (
-            TranscriptionConfig, TranscriptionMode, OpenAITranscriptionConfig
+            TranscriptionConfig,
+            TranscriptionMode,
+            OpenAITranscriptionConfig,
         )
-        
+
         transcription_config = TranscriptionConfig(
             mode=TranscriptionMode.OPENAI,
-            openai=OpenAITranscriptionConfig(api_key="test-key")
+            openai=OpenAITranscriptionConfig(api_key="test-key"),
         )
         mock_config = ApplicationConfig(transcription=transcription_config)
         mock_load_config.return_value = mock_config
@@ -76,7 +86,9 @@ class TestVoiceRecorderApp:
         "src.voice_recorder.infrastructure.transcription.simple_factory.SimpleTranscriptionServiceFactory.create_service"
     )
     @patch("src.voice_recorder.infrastructure.config_manager.ConfigManager.load_config")
-    def test_init_without_api_key(self, mock_load_config, mock_create_service, mock_create_enhanced_service):
+    def test_init_without_api_key(
+        self, mock_load_config, mock_create_service, mock_create_enhanced_service
+    ):
         """Test VoiceRecorderApp initialization without API key."""
         mock_service = Mock()
         mock_enhanced_service = Mock()
@@ -85,12 +97,14 @@ class TestVoiceRecorderApp:
 
         # Mock config loading to return a local config (no API key needed)
         from src.voice_recorder.domain.models import (
-            TranscriptionConfig, TranscriptionMode, LocalTranscriptionConfig
+            TranscriptionConfig,
+            TranscriptionMode,
+            LocalTranscriptionConfig,
         )
-        
+
         transcription_config = TranscriptionConfig(
             mode=TranscriptionMode.LOCAL,
-            local=LocalTranscriptionConfig(whisper_model="small")
+            local=LocalTranscriptionConfig(whisper_model="small"),
         )
         mock_config = ApplicationConfig(transcription=transcription_config)
         mock_load_config.return_value = mock_config
@@ -109,21 +123,25 @@ class TestVoiceRecorderApp:
         "src.voice_recorder.infrastructure.transcription.simple_factory.SimpleTranscriptionServiceFactory.create_service"
     )
     @patch("src.voice_recorder.infrastructure.config_manager.ConfigManager.load_config")
-    def test_signal_handler(self, mock_load_config, mock_create_service, mock_create_enhanced_service):
+    def test_signal_handler(
+        self, mock_load_config, mock_create_service, mock_create_enhanced_service
+    ):
         """Test signal handler."""
         mock_service = Mock()
         mock_enhanced_service = Mock()
         mock_create_service.return_value = mock_service
         mock_create_enhanced_service.return_value = mock_enhanced_service
-        
+
         # Mock config loading
         from src.voice_recorder.domain.models import (
-            TranscriptionConfig, TranscriptionMode, OpenAITranscriptionConfig
+            TranscriptionConfig,
+            TranscriptionMode,
+            OpenAITranscriptionConfig,
         )
-        
+
         transcription_config = TranscriptionConfig(
             mode=TranscriptionMode.OPENAI,
-            openai=OpenAITranscriptionConfig(api_key="test-key")
+            openai=OpenAITranscriptionConfig(api_key="test-key"),
         )
         mock_config = ApplicationConfig(transcription=transcription_config)
         mock_load_config.return_value = mock_config
@@ -143,21 +161,25 @@ class TestVoiceRecorderApp:
         "src.voice_recorder.infrastructure.transcription.simple_factory.SimpleTranscriptionServiceFactory.create_service"
     )
     @patch("src.voice_recorder.infrastructure.config_manager.ConfigManager.load_config")
-    def test_start_and_stop(self, mock_load_config, mock_create_service, mock_create_enhanced_service):
+    def test_start_and_stop(
+        self, mock_load_config, mock_create_service, mock_create_enhanced_service
+    ):
         """Test start and stop methods."""
         mock_service = Mock()
         mock_enhanced_service = Mock()
         mock_create_service.return_value = mock_service
         mock_create_enhanced_service.return_value = mock_enhanced_service
-        
+
         # Mock config loading
         from src.voice_recorder.domain.models import (
-            TranscriptionConfig, TranscriptionMode, OpenAITranscriptionConfig
+            TranscriptionConfig,
+            TranscriptionMode,
+            OpenAITranscriptionConfig,
         )
-        
+
         transcription_config = TranscriptionConfig(
             mode=TranscriptionMode.OPENAI,
-            openai=OpenAITranscriptionConfig(api_key="test-key")
+            openai=OpenAITranscriptionConfig(api_key="test-key"),
         )
         mock_config = ApplicationConfig(transcription=transcription_config)
         mock_load_config.return_value = mock_config
@@ -188,7 +210,9 @@ class TestCreateApp:
     @patch(
         "src.voice_recorder.infrastructure.transcription.simple_factory.SimpleTranscriptionServiceFactory.create_service"
     )
-    def test_create_app_with_config(self, mock_create_service, mock_create_enhanced_service):
+    def test_create_app_with_config(
+        self, mock_create_service, mock_create_enhanced_service
+    ):
         """Test create_app with config."""
         mock_service = Mock()
         mock_enhanced_service = Mock()
@@ -197,12 +221,14 @@ class TestCreateApp:
 
         # Create config with valid API key
         from src.voice_recorder.domain.models import (
-            TranscriptionConfig, TranscriptionMode, OpenAITranscriptionConfig
+            TranscriptionConfig,
+            TranscriptionMode,
+            OpenAITranscriptionConfig,
         )
-        
+
         transcription_config = TranscriptionConfig(
             mode=TranscriptionMode.OPENAI,
-            openai=OpenAITranscriptionConfig(api_key="test-key")
+            openai=OpenAITranscriptionConfig(api_key="test-key"),
         )
         config = ApplicationConfig(transcription=transcription_config)
         app = create_app(config)
@@ -217,21 +243,25 @@ class TestCreateApp:
         "src.voice_recorder.infrastructure.transcription.simple_factory.SimpleTranscriptionServiceFactory.create_service"
     )
     @patch("src.voice_recorder.infrastructure.config_manager.ConfigManager.load_config")
-    def test_create_app_without_config(self, mock_load_config, mock_create_service, mock_create_enhanced_service):
+    def test_create_app_without_config(
+        self, mock_load_config, mock_create_service, mock_create_enhanced_service
+    ):
         """Test create_app without config."""
         mock_service = Mock()
         mock_enhanced_service = Mock()
         mock_create_service.return_value = mock_service
         mock_create_enhanced_service.return_value = mock_enhanced_service
-        
+
         # Mock config loading
         from src.voice_recorder.domain.models import (
-            TranscriptionConfig, TranscriptionMode, OpenAITranscriptionConfig
+            TranscriptionConfig,
+            TranscriptionMode,
+            OpenAITranscriptionConfig,
         )
-        
+
         transcription_config = TranscriptionConfig(
             mode=TranscriptionMode.OPENAI,
-            openai=OpenAITranscriptionConfig(api_key="test-key")
+            openai=OpenAITranscriptionConfig(api_key="test-key"),
         )
         mock_config = ApplicationConfig(transcription=transcription_config)
         mock_load_config.return_value = mock_config

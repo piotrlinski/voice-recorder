@@ -46,14 +46,12 @@ class ConfigManager:
         config_parser.read(self.config_file)
 
         # Detect format by checking for nested sections
-        has_nested_sections = (
-            config_parser.has_section("transcription.openai") or 
-            config_parser.has_section("transcription.local")
-        )
-        has_flat_sections = (
-            config_parser.has_section("openai") or 
-            config_parser.has_section("controls")
-        )
+        has_nested_sections = config_parser.has_section(
+            "transcription.openai"
+        ) or config_parser.has_section("transcription.local")
+        has_flat_sections = config_parser.has_section(
+            "openai"
+        ) or config_parser.has_section("controls")
 
         if has_nested_sections:
             return self._load_nested_format(config_parser)
@@ -66,7 +64,7 @@ class ConfigManager:
         self, config_parser: configparser.ConfigParser
     ) -> ApplicationConfig:
         """Load the new nested configuration format."""
-        
+
         # Load transcription mode
         transcription_mode = TranscriptionMode(
             config_parser.get("transcription", "mode", fallback="openai")
@@ -75,19 +73,35 @@ class ConfigManager:
         # Load OpenAI transcription config
         openai_transcription_config = OpenAITranscriptionConfig(
             api_key=config_parser.get("transcription.openai", "api_key", fallback=None),
-            whisper_model=config_parser.get("transcription.openai", "whisper_model", fallback="whisper-1"),
-            gpt_model=config_parser.get("transcription.openai", "gpt_model", fallback="gpt-3.5-turbo"),
-            gpt_creativity=config_parser.getfloat("transcription.openai", "gpt_creativity", fallback=0.3),
+            whisper_model=config_parser.get(
+                "transcription.openai", "whisper_model", fallback="whisper-1"
+            ),
+            gpt_model=config_parser.get(
+                "transcription.openai", "gpt_model", fallback="gpt-3.5-turbo"
+            ),
+            gpt_creativity=config_parser.getfloat(
+                "transcription.openai", "gpt_creativity", fallback=0.3
+            ),
         )
 
         # Load Local transcription config
         local_transcription_config = LocalTranscriptionConfig(
             whisper_model=LocalWhisperModel(
-                config_parser.get("transcription.local", "whisper_model", fallback="small")
+                config_parser.get(
+                    "transcription.local", "whisper_model", fallback="small"
+                )
             ),
-            ollama_base_url=config_parser.get("transcription.local", "ollama_base_url", fallback="http://localhost:11434"),
-            ollama_model=config_parser.get("transcription.local", "ollama_model", fallback="llama3.1"),
-            ollama_creativity=config_parser.getfloat("transcription.local", "ollama_creativity", fallback=0.3),
+            ollama_base_url=config_parser.get(
+                "transcription.local",
+                "ollama_base_url",
+                fallback="http://localhost:11434",
+            ),
+            ollama_model=config_parser.get(
+                "transcription.local", "ollama_model", fallback="llama3.1"
+            ),
+            ollama_creativity=config_parser.getfloat(
+                "transcription.local", "ollama_creativity", fallback=0.3
+            ),
         )
 
         # Transcription config
@@ -100,7 +114,9 @@ class ConfigManager:
         # Controls config
         controls_config = ControlsConfig(
             basic_key=config_parser.get("controls", "basic_key", fallback="shift_r"),
-            enhanced_key=config_parser.get("controls", "enhanced_key", fallback="ctrl_l"),
+            enhanced_key=config_parser.get(
+                "controls", "enhanced_key", fallback="ctrl_l"
+            ),
         )
 
         # Audio config
@@ -110,7 +126,6 @@ class ConfigManager:
             format=AudioFormat(config_parser.get("audio", "format", fallback="wav")),
             chunk_size=config_parser.getint("audio", "chunk_size", fallback=1024),
         )
-
 
         # General config
         general_config = GeneralConfig(
@@ -132,12 +147,18 @@ class ConfigManager:
         # Convert flat format to nested format by creating nested configs
         # Map "cloud" mode to "openai" mode for backwards compatibility
         mode_value = config_parser.get("transcription", "mode", fallback="cloud")
-        transcription_mode = TranscriptionMode.OPENAI if mode_value == "cloud" else TranscriptionMode.LOCAL
+        transcription_mode = (
+            TranscriptionMode.OPENAI
+            if mode_value == "cloud"
+            else TranscriptionMode.LOCAL
+        )
 
         # Create OpenAI transcription config from flat format
         openai_transcription_config = OpenAITranscriptionConfig(
             api_key=config_parser.get("openai", "api_key", fallback=None),
-            gpt_creativity=config_parser.getfloat("transcription", "gpt_creativity", fallback=0.3),
+            gpt_creativity=config_parser.getfloat(
+                "transcription", "gpt_creativity", fallback=0.3
+            ),
         )
 
         # Create Local transcription config from flat format
@@ -169,7 +190,6 @@ class ConfigManager:
             format=AudioFormat(config_parser.get("audio", "format", fallback="wav")),
             chunk_size=config_parser.getint("audio", "chunk_size", fallback=1024),
         )
-
 
         # General config
         general_config = GeneralConfig(
@@ -216,7 +236,6 @@ class ConfigManager:
         # Extract hotkeys from old format
         basic_key = config_parser.get("hotkey", "key", fallback="shift_r")
         enhanced_key = config_parser.get("hotkey", "enhanced_key", fallback="ctrl_l")
-
 
         # Create new format config from old values
         from ..domain.models import OpenAIConfig, ControlsConfig, GeneralConfig
@@ -285,7 +304,6 @@ class ConfigManager:
             "chunk_size": str(config.audio.chunk_size),
         }
 
-
         # General section
         config_parser["general"] = {"auto_paste": str(config.general.auto_paste)}
 
@@ -342,20 +360,26 @@ class ConfigManager:
                     current_config.transcription.mode = TranscriptionMode.OPENAI
                 else:
                     current_config.transcription.mode = TranscriptionMode(mode_value)
-            
+
             if "model_name" in transcription_data:
                 # Convert model_name to whisper_model for local config
                 model_name = transcription_data["model_name"]
                 if model_name == "base":
                     # base is not a valid enum value, use small instead
-                    current_config.transcription.local.whisper_model = LocalWhisperModel.SMALL
+                    current_config.transcription.local.whisper_model = (
+                        LocalWhisperModel.SMALL
+                    )
                 else:
                     try:
-                        current_config.transcription.local.whisper_model = LocalWhisperModel(model_name)
+                        current_config.transcription.local.whisper_model = (
+                            LocalWhisperModel(model_name)
+                        )
                     except ValueError:
                         # Fall back to small if invalid
-                        current_config.transcription.local.whisper_model = LocalWhisperModel.SMALL
-        
+                        current_config.transcription.local.whisper_model = (
+                            LocalWhisperModel.SMALL
+                        )
+
         if "transcription_mode" in kwargs:
             current_config.transcription.mode = TranscriptionMode(
                 kwargs["transcription_mode"]
@@ -365,7 +389,9 @@ class ConfigManager:
                 kwargs["local_model"]
             )
         if "gpt_creativity" in kwargs:
-            current_config.transcription.openai.gpt_creativity = kwargs["gpt_creativity"]
+            current_config.transcription.openai.gpt_creativity = kwargs[
+                "gpt_creativity"
+            ]
 
         # Update controls config
         if "basic_key" in kwargs:
@@ -388,7 +414,6 @@ class ConfigManager:
             current_config.audio.chunk_size = audio_data.get(
                 "chunk_size", current_config.audio.chunk_size
             )
-
 
         # Update general config
         if "auto_paste" in kwargs:

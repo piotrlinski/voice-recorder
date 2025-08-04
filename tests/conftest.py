@@ -78,8 +78,6 @@ def mock_session_manager() -> Mock:
     return mock
 
 
-
-
 @pytest.fixture
 def mock_console() -> Mock:
     """Provide a mock console interface."""

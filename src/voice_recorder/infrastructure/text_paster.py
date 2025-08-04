@@ -151,14 +151,14 @@ class MacOSTextPaster(TextPasterInterface):
             return self.paste_at_mouse_position(text)
         else:
             return self.paste_text(text)
-    
+
     def clear_clipboard(self) -> bool:
         """Clear the clipboard contents."""
         try:
             # Clear clipboard by setting it to empty string
             process = subprocess.Popen(["pbcopy"], stdin=subprocess.PIPE, text=True)
             process.communicate(input="")
-            
+
             if process.returncode == 0:
                 if self.console:
                     self.console.debug("Clipboard cleared successfully")

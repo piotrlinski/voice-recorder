@@ -23,7 +23,9 @@ from ..infrastructure.hotkey import PynputHotkeyListener
 from ..infrastructure.logging_adapter import LoggingAdapter
 from ..infrastructure.session_manager import InMemorySessionManager
 from ..infrastructure.text_paster import MacOSTextPaster
-from ..infrastructure.transcription.simple_factory import SimpleTranscriptionServiceFactory
+from ..infrastructure.transcription.simple_factory import (
+    SimpleTranscriptionServiceFactory,
+)
 from ..services.voice_recorder_service import VoiceRecorderService
 
 
@@ -48,7 +50,7 @@ class VoiceRecorderApp:
         )
         # Create transcription factory
         transcription_factory = SimpleTranscriptionServiceFactory()
-        
+
         self.transcription_service: TranscriptionServiceInterface = (
             transcription_factory.create_service(
                 config.transcription, console=self.console
@@ -63,7 +65,9 @@ class VoiceRecorderApp:
             console=self.console
         )
         self.text_paster: TextPasterInterface = MacOSTextPaster(console=self.console)
-        self.session_manager: SessionManagerInterface = InMemorySessionManager(console=self.console)
+        self.session_manager: SessionManagerInterface = InMemorySessionManager(
+            console=self.console
+        )
 
         # Initialize service layer
         self.voice_recorder_service = VoiceRecorderService(

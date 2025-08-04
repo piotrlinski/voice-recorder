@@ -13,7 +13,7 @@ from typing import Any
 
 class AudioRecorderInterface(ABC):
     """Interface for audio recording functionality.
-    
+
     Defines the contract for audio recording implementations. Implementations
     should handle audio capture, session management, and file storage.
     """
@@ -21,13 +21,13 @@ class AudioRecorderInterface(ABC):
     @abstractmethod
     def start_recording(self, config: Any) -> str:
         """Start recording audio.
-        
+
         Args:
             config: Audio configuration with sample rate, channels, format, etc.
-            
+
         Returns:
             str: Unique session ID for the recording
-            
+
         Raises:
             RuntimeError: If recording cannot be started (e.g., device unavailable)
         """
@@ -36,10 +36,10 @@ class AudioRecorderInterface(ABC):
     @abstractmethod
     def stop_recording(self, session_id: str) -> str | None:
         """Stop recording and return file path.
-        
+
         Args:
             session_id: The session ID returned from start_recording()
-            
+
         Returns:
             str | None: Path to the saved audio file, or None if recording failed
         """
@@ -48,15 +48,14 @@ class AudioRecorderInterface(ABC):
     @abstractmethod
     def is_recording(self, session_id: str) -> bool:
         """Check if recording is active.
-        
+
         Args:
             session_id: The session ID to check
-            
+
         Returns:
             bool: True if recording is active for this session
         """
         pass
-
 
 
 class TranscriptionServiceInterface(ABC):
@@ -103,7 +102,7 @@ class TextPasterInterface(ABC):
     def paste_text(self, text: str) -> bool:
         """Paste text at current cursor position."""
         pass
-    
+
     @abstractmethod
     def clear_clipboard(self) -> bool:
         """Clear the clipboard contents."""
@@ -187,5 +186,3 @@ class SessionManager(SessionManagerInterface):
     """Legacy interface for recording session management."""
 
     pass
-
-

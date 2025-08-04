@@ -11,11 +11,11 @@ Usage:
     factory = SimpleTranscriptionServiceFactory()
     service = factory.create_service(config, console)
     result = service.transcribe("audio.wav")
-    
+
     # Enhanced service with text improvement
     enhanced_service = factory.create_enhanced_service(config, console)
     result = enhanced_service.transcribe_and_enhance("audio.wav")
-    
+
     # Flexible custom composition
     transcription_provider = OpenAITranscriptionProvider(openai_config)
     text_processor = OllamaTextProcessor(local_config)
@@ -42,10 +42,9 @@ __all__ = [
     "SimpleTranscriptionService",
     "TranscriptionProvider",
     "TextProcessor",
-    
     # Individual providers
     "OpenAITranscriptionProvider",
-    "LocalTranscriptionProvider", 
+    "LocalTranscriptionProvider",
     "OpenAITextProcessor",
     "OllamaTextProcessor",
     "NoTextProcessor",
