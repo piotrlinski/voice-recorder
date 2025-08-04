@@ -28,7 +28,10 @@
       "mcp__ide__getDiagnostics",
       "Bash(./scripts/docs.sh:*)",
       "Bash(pytest:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(cp:*)"
     ],
     "deny": []
   }

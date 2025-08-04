@@ -5,8 +5,8 @@
 # from the environment for the first two.
 SPHINXOPTS    ?=
 SPHINXBUILD  ?= sphinx-build
-SOURCEDIR    = docs/sphinx
-BUILDDIR     = docs/sphinx/_build
+SOURCEDIR    = docs
+BUILDDIR     = docs/_build
 
 # Put it first so that "make" without argument is like "make help".
 help:
@@ -17,17 +17,24 @@ help:
 # Documentation targets
 docs-html:
 	@echo "Building HTML documentation..."
+	@echo "Cleaning previous HTML files..."
+	@find docs -name "*.html" -delete 2>/dev/null || true
+	@rm -rf docs/_static docs/_sources docs/_modules docs/objects.inv docs/searchindex.js docs/.doctrees 2>/dev/null || true
 	@$(SPHINXBUILD) -b html "$(SOURCEDIR)" "$(BUILDDIR)/html" $(SPHINXOPTS) $(O)
-	@echo "Build finished. The HTML pages are in $(BUILDDIR)/html."
+	@echo "Moving HTML files to docs root..."
+	@cp -r "$(BUILDDIR)/html"/* docs/
+	@rm -rf "$(BUILDDIR)"
+	@echo "Build finished. The HTML pages are in docs/."
 
 docs-serve: docs-html
 	@echo "Starting documentation server at http://localhost:8000"
 	@echo "Press Ctrl+C to stop the server"
-	@cd "$(BUILDDIR)/html" && python -m http.server 8000
+	@cd docs && python -m http.server 8000
 
 docs-clean:
 	@echo "Cleaning documentation build directory..."
-	@rm -rf "$(BUILDDIR)"
+	@find docs -name "*.html" -delete 2>/dev/null || true
+	@rm -rf docs/_static docs/_sources docs/_modules docs/objects.inv docs/searchindex.js docs/.doctrees docs/_build 2>/dev/null || true
 	@echo "Documentation build directory cleaned."
 
 # Catch-all target: route all unknown targets to Sphinx-Makefile

@@ -341,7 +341,7 @@ Documentation is served directly from the main branch on GitHub Pages.
    - Go to repository **Settings** → **Pages**
    - Under **Source**, select **Deploy from a branch**
    - Select branch: **main**
-   - Select folder: **docs/sphinx/_build/html**
+   - Select folder: **docs**
 
 2. **Documentation URL**:
    Your documentation will be available at: `https://your-username.github.io/voice-recorder`
@@ -357,7 +357,7 @@ Documentation is served directly from the main branch on GitHub Pages.
 3. **Review locally** at `http://localhost:8000`
 4. **Commit and push** built documentation to main branch:
    ```bash
-   git add docs/sphinx/_build/html/
+   git add docs/
    git commit -m "Update documentation"
    git push origin main
    ```
@@ -381,7 +381,7 @@ The documentation system includes:
 - **Import errors**: Check that all source code is importable from the docs directory
 
 ### Complete Documentation
-For comprehensive documentation including API reference, configuration guides, and examples, see the built documentation at `docs/sphinx/_build/html/index.html` or visit the online documentation.
+For comprehensive documentation including API reference, configuration guides, and examples, see the built documentation at `docs/index.html` or visit the online documentation.
 
 ## Development
 
@@ -430,6 +430,6 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 ## Support
 
 For issues and questions:
-- Review the comprehensive documentation at `docs/sphinx/_build/html/`
+- Review the comprehensive documentation at `docs/index.html`
 - Check the configuration examples above
 - Open an issue on GitHub

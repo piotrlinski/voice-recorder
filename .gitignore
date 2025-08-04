@@ -68,9 +68,15 @@ instance/
 # Scrapy stuff:
 .scrapy
 
-# Sphinx documentation - ignore temporary build files only
-docs/sphinx/.doctrees/
-docs/sphinx/_build/.doctrees/
+# Sphinx documentation - ignore built HTML and temporary files, keep source
+docs/*.html
+docs/_static/
+docs/_sources/
+docs/_modules/
+docs/objects.inv
+docs/searchindex.js
+docs/.doctrees/
+docs/_build/
 
 # PyBuilder
 .pybuilder/
