@@ -25,9 +25,9 @@ class MacOSTextPaster(TextPasterInterface):
 
             if process.returncode == 0:
                 # Paste using AppleScript
-                script = f"""
+                script = """
                 tell application "System Events"
-                    keystroke "v" using {{command down}}
+                    keystroke "v" using {command down}
                 end tell
                 """
                 subprocess.run(["osascript", "-e", script], check=True)
@@ -53,10 +53,10 @@ class MacOSTextPaster(TextPasterInterface):
 
             if process.returncode == 0:
                 # Click at mouse position and paste
-                script = f"""
+                script = """
                 tell application "System Events"
                     click at mouse location
-                    keystroke "v" using {{command down}}
+                    keystroke "v" using {command down}
                 end tell
                 """
                 subprocess.run(["osascript", "-e", script], check=True)
@@ -99,10 +99,10 @@ class MacOSTextPaster(TextPasterInterface):
                 mouse_pos = mouse_result.stdout.strip()
                 if mouse_pos:
                     # Click at mouse position and paste
-                    paste_script = f"""
+                    paste_script = """
                     tell application "System Events"
                         click at mouse location
-                        keystroke "v" using {{command down}}
+                        keystroke "v" using {command down}
                     end tell
                     """
                     subprocess.run(["osascript", "-e", paste_script], check=True)
@@ -112,9 +112,9 @@ class MacOSTextPaster(TextPasterInterface):
                     return True
                 else:
                     # Fallback to regular paste
-                    fallback_script = f"""
+                    fallback_script = """
                     tell application "System Events"
-                        keystroke "v" using {{command down}}
+                        keystroke "v" using {command down}
                     end tell
                     """
                     subprocess.run(["osascript", "-e", fallback_script], check=True)

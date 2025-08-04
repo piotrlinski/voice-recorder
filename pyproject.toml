@@ -39,7 +39,6 @@ dependencies = [
     "pyaudio>=0.2.0",
     "pydantic>=2.0.0",
     "configparser>=5.0.0",
-    "PyQt6>=6.4.0",
     "httpx>=0.25.0",
 ]
 
@@ -76,8 +75,7 @@ Repository = "https://github.com/voicerecorder/voice-recorder"
 Changelog = "https://github.com/voicerecorder/voice-recorder/blob/main/CHANGELOG.md"
 
 [project.scripts]
-voice-recorder = "voice_recorder.api.app:main"
-voice-recorder-gui = "voice_recorder.gui:main"
+voice-recorder = "voice_recorder.cli.commands:main"
 
 
 [tool.setuptools.packages.find]

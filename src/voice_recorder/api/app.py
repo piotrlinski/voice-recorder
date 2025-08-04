@@ -2,7 +2,6 @@
 Voice recorder application entry point.
 """
 
-import os
 import signal
 import sys
 import time
@@ -11,7 +10,6 @@ from typing import Optional
 
 from ..domain.interfaces import (
     AudioRecorderInterface,
-    AudioFeedback,
     HotkeyListenerInterface,
     SessionManagerInterface,
     TextPasterInterface,
@@ -19,14 +17,13 @@ from ..domain.interfaces import (
     EnhancedTranscriptionServiceInterface,
 )
 from ..domain.models import ApplicationConfig
-from ..infrastructure.audio_feedback import SystemAudioFeedback
 from ..infrastructure.audio_recorder import PyAudioRecorder
 from ..infrastructure.config_manager import ConfigManager
 from ..infrastructure.hotkey import PynputHotkeyListener
 from ..infrastructure.logging_adapter import LoggingAdapter
 from ..infrastructure.session_manager import InMemorySessionManager
 from ..infrastructure.text_paster import MacOSTextPaster
-from ..infrastructure.transcription.factory import TranscriptionServiceFactory
+from ..infrastructure.transcription.simple_factory import SimpleTranscriptionServiceFactory
 from ..services.voice_recorder_service import VoiceRecorderService
 
 
@@ -47,16 +44,18 @@ class VoiceRecorderApp:
 
         # Initialize infrastructure components
         self.audio_recorder: AudioRecorderInterface = PyAudioRecorder(
-            console=self.console,
-            sound_config=self.config.sound
+            console=self.console
         )
+        # Create transcription factory
+        transcription_factory = SimpleTranscriptionServiceFactory()
+        
         self.transcription_service: TranscriptionServiceInterface = (
-            TranscriptionServiceFactory.create_service(
+            transcription_factory.create_service(
                 config.transcription, console=self.console
             )
         )
         self.enhanced_transcription_service: EnhancedTranscriptionServiceInterface = (
-            TranscriptionServiceFactory.create_enhanced_service(
+            transcription_factory.create_enhanced_service(
                 config.transcription, console=self.console
             )
         )
@@ -64,8 +63,7 @@ class VoiceRecorderApp:
             console=self.console
         )
         self.text_paster: TextPasterInterface = MacOSTextPaster(console=self.console)
-        self.session_manager: SessionManagerInterface = InMemorySessionManager()
-        self.audio_feedback: AudioFeedback = SystemAudioFeedback(console=self.console)
+        self.session_manager: SessionManagerInterface = InMemorySessionManager(console=self.console)
 
         # Initialize service layer
         self.voice_recorder_service = VoiceRecorderService(
@@ -75,7 +73,6 @@ class VoiceRecorderApp:
             hotkey_listener=self.hotkey_listener,
             text_paster=self.text_paster,
             session_manager=self.session_manager,
-            audio_feedback=self.audio_feedback,
             config=self.config,
             console=self.console,
         )
@@ -101,7 +98,6 @@ class VoiceRecorderApp:
         )
         self.console.info(f"Transcription: {self.config.transcription.mode.value}")
         self.console.info(f"Auto-paste: {self.config.general.auto_paste}")
-        self.console.info(f"Sound feedback: {self.config.sound.enabled}")
 
         try:
             self.voice_recorder_service.start()

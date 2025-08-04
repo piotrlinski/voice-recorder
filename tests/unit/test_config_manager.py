@@ -109,11 +109,11 @@ temp_directory = /tmp
             config = config_manager.load_config()
 
             assert isinstance(config, ApplicationConfig)
-            assert config.audio_config.sample_rate == 16000
-            assert config.transcription_config.mode == TranscriptionMode.OPENAI_WHISPER
-            assert config.hotkey_config.key == "shift"
-            assert config.sound_config.enabled is True
-            assert config.auto_paste is True
+            assert config.audio.sample_rate == 16000
+            assert config.transcription.mode == TranscriptionMode.OPENAI
+            assert config.controls.basic_key == "shift"
+            assert config.sound.enabled is True
+            assert config.general.auto_paste is True
 
     def test_save_config(self):
         """Test save_config method."""
@@ -132,7 +132,7 @@ temp_directory = /tmp
             content = config_manager.config_file.read_text()
             assert "[audio]" in content
             assert "[transcription]" in content
-            assert "[hotkey]" in content
+            assert "[controls]" in content
             assert "[sound]" in content
             assert "[general]" in content
 
@@ -160,18 +160,19 @@ temp_directory = /tmp
         with tempfile.TemporaryDirectory() as temp_dir:
             config_manager = ConfigManager(temp_dir)
 
-            # Create a config with custom temp directory
-            custom_temp_dir = Path(temp_dir) / "custom_temp"
-            config_content = f"""
+            # Create a basic config file
+            config_content = """
 [general]
-temp_directory = {custom_temp_dir}
+auto_paste = true
 """
             config_file = Path(temp_dir) / "config.ini"
             config_file.write_text(config_content)
 
             temp_dir_path = config_manager.get_temp_directory()
 
-            assert temp_dir_path == str(custom_temp_dir)
+            # Should return the default temp directory
+            expected_temp_dir = str(Path.home() / ".voicerecorder" / "temp")
+            assert temp_dir_path == expected_temp_dir
 
     def test_reset_to_defaults(self):
         """Test reset_to_defaults method."""
@@ -208,8 +209,8 @@ sample_rate = 8000
 
             # Verify updates
             assert (
-                updated_config.transcription_config.mode
-                == TranscriptionMode.LOCAL_WHISPER
+                updated_config.transcription.mode
+                == TranscriptionMode.LOCAL
             )
-            assert updated_config.transcription_config.model_name == "base"
-            assert updated_config.audio_config.sample_rate == 22050
+            assert updated_config.transcription.local.whisper_model == "small"  # base should be converted to small
+            assert updated_config.audio.sample_rate == 22050

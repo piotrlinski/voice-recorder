@@ -78,13 +78,6 @@ def mock_session_manager() -> Mock:
     return mock
 
 
-@pytest.fixture
-def mock_audio_feedback() -> Mock:
-    """Provide a mock audio feedback."""
-    mock = Mock()
-    mock.play_start_beep = Mock()
-    mock.play_stop_beep = Mock()
-    return mock
 
 
 @pytest.fixture

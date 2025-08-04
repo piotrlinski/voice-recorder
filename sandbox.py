@@ -1,35 +1,35 @@
-# from re import A
-# from voice_recorder.infrastructure.audio_feedback import SystemAudioFeedback
+# from pyaudio import paInt16, PyAudio
 
-# audio_feedback = SystemAudioFeedback()
 
-# audio_feedback.play_basic_start_beep()
+# stream = PyAudio().open(
+#     format=paInt16,
+#     channels=1,
+#     rate=16000,
+#     input=True,
+#     frames_per_buffer=1024,
+#     stream_callback=lambda in_data, frame_count, time_info, status: (in_data, PyAudio.paContinue),
+# )
 
-# audio_feedback.play_basic_stop_beep()
-
-# audio_feedback.play_enhanced_start_beep()
-
-# audio_feedback.play_enhanced_stop_beep()
-
-# audio_feedback.play_start_beep()
-
-# audio_feedback.play_stop_beep()
+# stream.start_stream()
 
 
 
-# from voice_recorder.api.app import create_app
+# from voice_recorder.infrastructure.audio_recorder import PyAudioRecorder
+# from voice_recorder.domain.models import AudioConfig
 
-# app = create_app()
+# config = AudioConfig()
 
-# app.start()
+# recorder = PyAudioRecorder()
+# recorder.start_recording(config=config)
 
-from pyaudio import PyAudio, paInt16
+# recorder.play_start_beep()
 
-PyAudio().open(
-    format=paInt16,
-    channels=1,
-    rate=16000,
-    input=True,
-    frames_per_buffer=1024,
-    stream_callback=lambda in_data, frame_count, time_info, status: (in_data, PyAudio.paContinue),
-)
+
+
+
+
+from voice_recorder.api.app import create_app
+
+app = create_app()
+
+app.start() 

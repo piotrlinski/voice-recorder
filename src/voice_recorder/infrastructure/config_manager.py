@@ -3,7 +3,6 @@ INI-based configuration manager for voice recorder.
 """
 
 import configparser
-import os
 from pathlib import Path
 from typing import Optional
 
@@ -11,8 +10,6 @@ from ..domain.models import (
     ApplicationConfig,
     AudioConfig,
     AudioFormat,
-    SoundConfig,
-    SoundType,
     TranscriptionConfig,
     TranscriptionMode,
     LocalWhisperModel,
@@ -114,30 +111,6 @@ class ConfigManager:
             chunk_size=config_parser.getint("audio", "chunk_size", fallback=1024),
         )
 
-        # Sound config
-        sound_config = SoundConfig(
-            enabled=config_parser.getboolean("sound", "enabled", fallback=True),
-            volume=config_parser.getint("sound", "volume", fallback=15),
-            basic_sound_type=SoundType(
-                config_parser.get("sound", "basic_sound_type", fallback="tone")
-            ),
-            basic_start_frequency=config_parser.getfloat(
-                "sound", "basic_start_frequency", fallback=800.0
-            ),
-            basic_end_frequency=config_parser.getfloat(
-                "sound", "basic_end_frequency", fallback=1200.0
-            ),
-            enhanced_sound_type=SoundType(
-                config_parser.get("sound", "enhanced_sound_type", fallback="tone")
-            ),
-            enhanced_start_frequency=config_parser.getfloat(
-                "sound", "enhanced_start_frequency", fallback=1000.0
-            ),
-            enhanced_end_frequency=config_parser.getfloat(
-                "sound", "enhanced_end_frequency", fallback=1400.0
-            ),
-            duration=config_parser.getfloat("sound", "duration", fallback=0.3),
-        )
 
         # General config
         general_config = GeneralConfig(
@@ -148,7 +121,6 @@ class ConfigManager:
             transcription=transcription_config,
             controls=controls_config,
             audio=audio_config,
-            sound=sound_config,
             general=general_config,
         )
 
@@ -198,30 +170,6 @@ class ConfigManager:
             chunk_size=config_parser.getint("audio", "chunk_size", fallback=1024),
         )
 
-        # Sound config
-        sound_config = SoundConfig(
-            enabled=config_parser.getboolean("sound", "enabled", fallback=True),
-            volume=config_parser.getint("sound", "volume", fallback=15),
-            basic_sound_type=SoundType(
-                config_parser.get("sound", "basic_sound_type", fallback="tone")
-            ),
-            basic_start_frequency=config_parser.getfloat(
-                "sound", "basic_start_frequency", fallback=800.0
-            ),
-            basic_end_frequency=config_parser.getfloat(
-                "sound", "basic_end_frequency", fallback=1200.0
-            ),
-            enhanced_sound_type=SoundType(
-                config_parser.get("sound", "enhanced_sound_type", fallback="tone")
-            ),
-            enhanced_start_frequency=config_parser.getfloat(
-                "sound", "enhanced_start_frequency", fallback=1000.0
-            ),
-            enhanced_end_frequency=config_parser.getfloat(
-                "sound", "enhanced_end_frequency", fallback=1400.0
-            ),
-            duration=config_parser.getfloat("sound", "duration", fallback=0.3),
-        )
 
         # General config
         general_config = GeneralConfig(
@@ -232,7 +180,6 @@ class ConfigManager:
             transcription=transcription_config,
             controls=controls_config,
             audio=audio_config,
-            sound=sound_config,
             general=general_config,
         )
 
@@ -248,7 +195,7 @@ class ConfigManager:
         # Map old transcription mode to new mode
         old_mode = config_parser.get("transcription", "mode", fallback="openai_whisper")
         new_mode = (
-            TranscriptionMode.CLOUD
+            TranscriptionMode.OPENAI
             if old_mode == "openai_whisper"
             else TranscriptionMode.LOCAL
         )
@@ -270,9 +217,6 @@ class ConfigManager:
         basic_key = config_parser.get("hotkey", "key", fallback="shift_r")
         enhanced_key = config_parser.get("hotkey", "enhanced_key", fallback="ctrl_l")
 
-        # Convert old volume format (0.0-1.0) to new format (0-100)
-        old_volume = config_parser.getfloat("sound", "volume", fallback=0.15)
-        new_volume = int(old_volume * 100) if old_volume <= 1.0 else int(old_volume)
 
         # Create new format config from old values
         from ..domain.models import OpenAIConfig, ControlsConfig, GeneralConfig
@@ -292,23 +236,6 @@ class ConfigManager:
                     config_parser.get("audio", "format", fallback="wav")
                 ),
                 chunk_size=config_parser.getint("audio", "chunk_size", fallback=1024),
-            ),
-            sound=SoundConfig(
-                enabled=config_parser.getboolean("sound", "enabled", fallback=True),
-                volume=new_volume,
-                basic_sound_type=SoundType(
-                    config_parser.get("sound", "sound_type", fallback="tone")
-                ),
-                basic_start_frequency=config_parser.getfloat(
-                    "sound", "start_frequency", fallback=800.0
-                ),
-                basic_end_frequency=config_parser.getfloat(
-                    "sound", "end_frequency", fallback=1200.0
-                ),
-                enhanced_sound_type=SoundType.TONE,  # Default for enhanced
-                enhanced_start_frequency=1000.0,
-                enhanced_end_frequency=1400.0,
-                duration=config_parser.getfloat("sound", "duration", fallback=0.3),
             ),
             general=GeneralConfig(
                 auto_paste=config_parser.getboolean(
@@ -358,18 +285,6 @@ class ConfigManager:
             "chunk_size": str(config.audio.chunk_size),
         }
 
-        # Sound section
-        config_parser["sound"] = {
-            "enabled": str(config.sound.enabled),
-            "volume": str(config.sound.volume),
-            "basic_sound_type": config.sound.basic_sound_type.value,
-            "basic_start_frequency": str(config.sound.basic_start_frequency),
-            "basic_end_frequency": str(config.sound.basic_end_frequency),
-            "enhanced_sound_type": config.sound.enhanced_sound_type.value,
-            "enhanced_start_frequency": str(config.sound.enhanced_start_frequency),
-            "enhanced_end_frequency": str(config.sound.enhanced_end_frequency),
-            "duration": str(config.sound.duration),
-        }
 
         # General section
         config_parser["general"] = {"auto_paste": str(config.general.auto_paste)}
@@ -416,16 +331,41 @@ class ConfigManager:
             current_config.openai.api_key = kwargs["openai_api_key"]
 
         # Update transcription config
+        if "transcription_config" in kwargs:
+            transcription_data = kwargs["transcription_config"]
+            if "mode" in transcription_data:
+                # Handle old mode values
+                mode_value = transcription_data["mode"]
+                if mode_value == "local_whisper":
+                    current_config.transcription.mode = TranscriptionMode.LOCAL
+                elif mode_value == "openai_whisper":
+                    current_config.transcription.mode = TranscriptionMode.OPENAI
+                else:
+                    current_config.transcription.mode = TranscriptionMode(mode_value)
+            
+            if "model_name" in transcription_data:
+                # Convert model_name to whisper_model for local config
+                model_name = transcription_data["model_name"]
+                if model_name == "base":
+                    # base is not a valid enum value, use small instead
+                    current_config.transcription.local.whisper_model = LocalWhisperModel.SMALL
+                else:
+                    try:
+                        current_config.transcription.local.whisper_model = LocalWhisperModel(model_name)
+                    except ValueError:
+                        # Fall back to small if invalid
+                        current_config.transcription.local.whisper_model = LocalWhisperModel.SMALL
+        
         if "transcription_mode" in kwargs:
             current_config.transcription.mode = TranscriptionMode(
                 kwargs["transcription_mode"]
             )
         if "local_model" in kwargs:
-            current_config.transcription.local_model = LocalWhisperModel(
+            current_config.transcription.local.whisper_model = LocalWhisperModel(
                 kwargs["local_model"]
             )
         if "gpt_creativity" in kwargs:
-            current_config.transcription.gpt_creativity = kwargs["gpt_creativity"]
+            current_config.transcription.openai.gpt_creativity = kwargs["gpt_creativity"]
 
         # Update controls config
         if "basic_key" in kwargs:
@@ -449,17 +389,6 @@ class ConfigManager:
                 "chunk_size", current_config.audio.chunk_size
             )
 
-        # Update sound config (backwards compatibility)
-        if "sound_config" in kwargs:
-            sound_data = kwargs["sound_config"]
-            current_config.sound.enabled = sound_data.get(
-                "sound_enabled", current_config.sound.enabled
-            )
-            # Convert volume if needed
-            volume = sound_data.get("sound_volume", current_config.sound.volume)
-            if isinstance(volume, float) and volume <= 1.0:
-                volume = int(volume * 100)
-            current_config.sound.volume = volume
 
         # Update general config
         if "auto_paste" in kwargs:

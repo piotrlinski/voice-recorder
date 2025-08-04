@@ -27,13 +27,13 @@ Key pressed: Key.shift_r (type: <enum 'Key'>)
 ```
 Then the key detection is working.
 
-## 3. Use Manual Recording Button
+## 3. Alternative Troubleshooting
 
-If hotkeys still don't work, you can use the manual recording button in the GUI:
+If hotkeys still don't work, check the following:
 
-1. Open the Voice Recorder GUI application
-2. Click the "🎤 Start Recording" button to start recording
-3. Click the "⏹️ Stop Recording" button to stop recording
+1. Ensure the Voice Recorder application is running in the background
+2. Verify that no other applications are intercepting the hotkey
+3. Try different keys to isolate the problem
 
 ## 4. Check Configuration
 
@@ -84,7 +84,7 @@ If you're still having issues:
 
 1. Run the debug script and share the output
 2. Check the console output for error messages
-3. Try the manual recording button as a workaround
+3. Try alternative hotkey configurations as a workaround
 4. Report the issue with details about your macOS version and setup
 
 ## 9. Manual Testing

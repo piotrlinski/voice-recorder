@@ -2,18 +2,13 @@
 Interactive configuration wizard for Voice Recorder CLI.
 """
 
-import os
 import sys
-from pathlib import Path
 from typing import Optional, List
 
 from ..domain.models import (
     ApplicationConfig,
     AudioConfig,
     AudioFormat,
-    HotkeyConfig,
-    SoundConfig,
-    SoundType,
     TranscriptionConfig,
     TranscriptionMode,
     ControlsConfig,
@@ -43,7 +38,6 @@ class ConfigurationWizard:
         # Collect configuration
         transcription_config = self._configure_transcription()
         controls_config = self._configure_controls()
-        sound_config = self._configure_sound()
         audio_config = self._configure_audio()
         general_config = self._configure_general()
 
@@ -51,7 +45,6 @@ class ConfigurationWizard:
         config = ApplicationConfig(
             transcription=transcription_config,
             controls=controls_config,
-            sound=sound_config,
             audio=audio_config,
             general=general_config,
         )
@@ -214,108 +207,6 @@ class ConfigurationWizard:
 
         return basic_key, enhanced_key, description
 
-    def _configure_sound(self) -> SoundConfig:
-        """Configure sound feedback settings"""
-        print("🔊 SOUND FEEDBACK SETTINGS")
-        print("-" * 40)
-        print()
-
-        # Enable/disable sound
-        enable_sound = self._get_yes_no(
-            "Enable sound feedback for recording? (Y/n): ", True
-        )
-
-        if not enable_sound:
-            print("✅ Sound feedback disabled")
-            print()
-            return SoundConfig(enabled=False)
-
-        # Disable start sounds option
-        print()
-        disable_start_sounds = self._get_yes_no(
-            "Disable start recording sounds (keep stop sounds)? (y/N): ", False
-        )
-
-        # Volume
-        print()
-        volume = self._get_int_input(
-            "Sound volume (0-100, default: 15): ",
-            default=15,
-            min_val=0,
-            max_val=100,
-        )
-
-        # Sound type for basic transcription
-        print()
-        print("Choose sound type for basic transcription:")
-        print("1. Tone (Recommended) - Pleasant sweep tones")
-        print("2. Beep - Simple system beep")
-        print("3. None - No sound")
-        print()
-
-        while True:
-            choice = input("Select basic sound type (1, 2, or 3): ").strip()
-            if choice == "1":
-                basic_sound_type = SoundType.TONE
-                break
-            elif choice == "2":
-                basic_sound_type = SoundType.BEEP
-                break
-            elif choice == "3":
-                basic_sound_type = SoundType.NONE
-                break
-            else:
-                print("❌ Please enter 1, 2, or 3")
-
-        # Sound type for enhanced transcription
-        print()
-        print("Choose sound type for enhanced transcription:")
-        print("1. Tone (Recommended) - Pleasant sweep tones")
-        print("2. Beep - Simple system beep")
-        print("3. None - No sound")
-        print()
-
-        while True:
-            choice = input("Select enhanced sound type (1, 2, or 3): ").strip()
-            if choice == "1":
-                enhanced_sound_type = SoundType.TONE
-                break
-            elif choice == "2":
-                enhanced_sound_type = SoundType.BEEP
-                break
-            elif choice == "3":
-                enhanced_sound_type = SoundType.NONE
-                break
-            else:
-                print("❌ Please enter 1, 2, or 3")
-
-        # Duration
-        print()
-        duration = self._get_float_input(
-            "Sound duration in seconds (0.1-1.0, default: 0.3): ",
-            default=0.3,
-            min_val=0.1,
-            max_val=1.0,
-        )
-
-        print(f"✅ Sound: Basic={basic_sound_type.value}, Enhanced={enhanced_sound_type.value}")
-        print(f"   Volume: {volume}%, Duration: {duration}s")
-        if disable_start_sounds:
-            print("   Start sounds: Disabled (stop sounds only)")
-        print()
-
-        return SoundConfig(
-            enabled=True,
-            disable_start_sounds=disable_start_sounds,
-            volume=volume,
-            basic_sound_type=basic_sound_type,
-            basic_start_frequency=600.0,
-            basic_end_frequency=800.0,
-            enhanced_sound_type=enhanced_sound_type,
-            enhanced_start_frequency=1000.0,
-            enhanced_end_frequency=1200.0,
-            duration=duration,
-        )
 
     def _configure_audio(self) -> AudioConfig:
         """Configure audio recording settings"""
@@ -387,9 +278,6 @@ class ConfigurationWizard:
         print(f"   🗣️  Transcription: {config.transcription.mode.value}")
         print(f"   ⌨️  Basic Key: {config.controls.basic_key}")
         print(f"   ⌨️  Enhanced Key: {config.controls.enhanced_key}")
-        print(
-            f"   🔊 Sound: {'Enabled' if config.sound.enabled else 'Disabled'}"
-        )
         print(f"   📋 Auto-paste: {'Enabled' if config.general.auto_paste else 'Disabled'}")
         print()
         print("📁 Configuration saved to:")
@@ -397,9 +285,6 @@ class ConfigurationWizard:
         print()
         print("🚀 To start recording, run:")
         print("   voice-recorder")
-        print()
-        print("🖥️  For GUI interface, run:")
-        print("   voice-recorder-gui")
         print()
 
     # Helper methods

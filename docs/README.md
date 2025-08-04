@@ -38,7 +38,6 @@ voice-recorder/
 │   ├── api/                      # Application entry points
 │   ├── cli/                      # Command-line interface
 │   ├── domain/                   # Core business logic
-│   ├── gui/                      # Graphical user interface
 │   ├── infrastructure/           # External dependencies
 │   └── services/                 # Application services
 ├── tests/                        # Test suite

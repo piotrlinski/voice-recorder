@@ -4,7 +4,6 @@ CLI command handlers for Voice Recorder.
 
 import argparse
 import sys
-from typing import Optional
 
 from .config_wizard import ConfigurationWizard
 from ..infrastructure.config_manager import ConfigManager
@@ -30,8 +29,6 @@ Examples:
   voice-recorder init              Initialize configuration
   voice-recorder                   Start recording (default)
   voice-recorder --help            Show this help message
-  
-For GUI interface, run: voice-recorder-gui
             """,
         )
 
@@ -94,7 +91,7 @@ For GUI interface, run: voice-recorder-gui
 
         # Run configuration wizard
         wizard = ConfigurationWizard()
-        config = wizard.run_wizard()
+        wizard.run_wizard()
 
         return 0
 
@@ -164,12 +161,6 @@ For GUI interface, run: voice-recorder-gui
             print(f"   Description: {config.hotkey_config.description}")
             print()
 
-            print("🔊 Sound:")
-            print(f"   Enabled: {config.sound_config.enabled}")
-            if config.sound_config.enabled:
-                print(f"   Type: {config.sound_config.sound_type.value}")
-                print(f"   Volume: {int(config.sound_config.volume * 100)}%")
-            print()
 
             print("🎙️  Audio:")
             print(f"   Sample Rate: {config.audio_config.sample_rate} Hz")

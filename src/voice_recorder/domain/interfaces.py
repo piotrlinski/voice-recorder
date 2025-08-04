@@ -3,7 +3,7 @@ Domain interfaces for the voice recorder application.
 """
 
 from abc import ABC, abstractmethod
-from typing import Any, Protocol
+from typing import Any
 
 
 class AudioRecorderInterface(ABC):
@@ -24,15 +24,6 @@ class AudioRecorderInterface(ABC):
         """Check if recording is active."""
         pass
 
-    @abstractmethod
-    def play_start_beep(self, recording_type: str = "basic") -> None:
-        """Play start recording beep."""
-        pass
-
-    @abstractmethod
-    def play_stop_beep(self, recording_type: str = "basic") -> None:
-        """Play stop recording beep."""
-        pass
 
 
 class TranscriptionServiceInterface(ABC):
@@ -160,15 +151,3 @@ class SessionManager(SessionManagerInterface):
     pass
 
 
-class AudioFeedback(ABC):
-    """Interface for audio feedback capabilities."""
-
-    @abstractmethod
-    def play_start_beep(self) -> None:
-        """Play start recording beep."""
-        pass
-
-    @abstractmethod
-    def play_stop_beep(self) -> None:
-        """Play stop recording beep."""
-        pass

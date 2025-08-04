@@ -115,12 +115,6 @@ class TranscriptionConfig(BaseModel):
     )
 
 
-class SoundType(str, Enum):
-    """Sound type enumeration."""
-
-    TONE = "tone"
-    BEEP = "beep"
-    NONE = "none"
 
 
 class AudioConfig(BaseModel):
@@ -176,36 +170,6 @@ class EnhancedTranscriptionResult(BaseModel):
     gpt_model: Optional[str] = Field(default=None, description="GPT model used")
 
 
-class SoundConfig(BaseModel):
-    """Audio feedback sound configuration."""
-
-    enabled: bool = Field(default=True, description="Enable audio feedback sounds")
-    disable_start_sounds: bool = Field(default=False, description="Disable start recording sounds (keep stop sounds)")
-    volume: int = Field(
-        default=15, ge=0, le=100, description="Sound volume percentage (0 to 100)"
-    )
-    # Basic transcription sound
-    basic_sound_type: SoundType = Field(
-        default=SoundType.TONE, description="Sound type for basic transcription"
-    )
-    basic_start_frequency: float = Field(
-        default=800.0, description="Start frequency for basic transcription tone (Hz)"
-    )
-    basic_end_frequency: float = Field(
-        default=1400.0, description="End frequency for basic transcription tone (Hz)"
-    )
-    # Enhanced transcription sound
-    enhanced_sound_type: SoundType = Field(
-        default=SoundType.TONE, description="Sound type for enhanced transcription"
-    )
-    enhanced_start_frequency: float = Field(
-        default=200.0,
-        description="Start frequency for enhanced transcription tone (Hz)",
-    )
-    enhanced_end_frequency: float = Field(
-        default=800.0, description="End frequency for enhanced transcription tone (Hz)"
-    )
-    duration: float = Field(default=0.3, description="Sound duration in seconds")
 
 
 class ControlsConfig(BaseModel):
@@ -231,7 +195,6 @@ class ApplicationConfig(BaseModel):
         default=ControlsConfig(basic_key="shift_r", enhanced_key="ctrl_l")
     )
     audio: AudioConfig = Field(default_factory=AudioConfig)
-    sound: SoundConfig = Field(default_factory=SoundConfig)
     general: GeneralConfig = Field(default_factory=GeneralConfig)
 
     # Backwards compatibility properties for existing code
@@ -339,10 +302,6 @@ class ApplicationConfig(BaseModel):
 
         return HotkeyConfigWrapper(self.controls)
 
-    @property
-    def sound_config(self) -> SoundConfig:
-        """Backwards compatibility: Use sound instead."""
-        return self.sound
 
     @property
     def auto_paste(self) -> bool:

@@ -2,8 +2,7 @@
 Hotkey listening infrastructure implementations.
 """
 
-import os
-from typing import Any, Callable, Optional
+from typing import Any, Callable
 
 from ..domain.interfaces import HotkeyListenerInterface, ConsoleInterface
 

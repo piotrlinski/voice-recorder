@@ -163,7 +163,7 @@ tests/
 ### Audio Processing
 - Configurable sample rates (default: 16kHz for Whisper compatibility)
 - Support for multiple audio formats
-- Audio feedback system with customizable tones and volumes
+- Natural system audio feedback when accessing microphone
 
 ## Development Workflow
 
@@ -174,7 +174,7 @@ tests/
 5. Run quality checks: `mypy`, `black`, `isort`, `flake8`
 6. Test functionality:
    - **CLI**: `voice-recorder` (supports hotkeys and background operation)
-   - **GUI**: `voice-recorder-gui` (manual recording mode, no hotkeys)
+   - **Configuration**: `voice-recorder init` (interactive setup wizard)
    - **Python API**:
 
      ```python
@@ -183,14 +183,13 @@ tests/
      app.start()
      ```
 
-## GUI vs CLI Modes
+## CLI Mode
 
 - **CLI Mode** (`voice-recorder`): Full functionality with hotkey support and background operation
-- **GUI Mode** (`voice-recorder-gui`): Beautiful interface optimized for manual recording operation
-  - Uses manual "Start Recording" button instead of hotkeys
-  - No background threading (prevents macOS window visibility issues)
-  - Full transcription and configuration capabilities
-  - Ideal for interactive use
+  - Interactive configuration wizard: `voice-recorder init`
+  - Configuration management: `voice-recorder config show/path/reset`
+  - Background hotkey support for hands-free operation
+  - Lightweight and efficient command-line interface
 
 ## Security Considerations
 

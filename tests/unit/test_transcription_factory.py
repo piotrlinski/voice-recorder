@@ -5,75 +5,108 @@ Unit tests for transcription factory.
 import pytest
 from unittest.mock import Mock, patch
 
-from src.voice_recorder.domain.models import TranscriptionConfig, TranscriptionMode
-from src.voice_recorder.infrastructure.transcription.factory import (
-    TranscriptionServiceFactory,
+from src.voice_recorder.domain.models import (
+    TranscriptionConfig, 
+    TranscriptionMode, 
+    OpenAITranscriptionConfig,
+    LocalTranscriptionConfig
 )
+from src.voice_recorder.infrastructure.transcription.simple_factory import (
+    SimpleTranscriptionServiceFactory,
+)
+from src.voice_recorder.infrastructure.transcription.service import SimpleTranscriptionService
 
 
-class TestTranscriptionServiceFactory:
-    """Test cases for TranscriptionServiceFactory."""
 
-    def test_create_openai_service(self):
-        """Test creating OpenAI transcription service."""
+class TestSimpleTranscriptionServiceFactory:
+    """Test cases for the new SimpleTranscriptionServiceFactory."""
+    
+    def test_create_service_openai(self):
+        """Test creating OpenAI service with new factory."""
         config = TranscriptionConfig(
-            mode=TranscriptionMode.OPENAI_WHISPER,
-            model_name="whisper-1",
-            api_key="test-key",
-        )
-
-        with patch(
-            "src.voice_recorder.infrastructure.transcription.factory.OpenAITranscriptionService"
-        ) as mock_service:
-            service = TranscriptionServiceFactory.create_service(config)
-            mock_service.assert_called_once_with(config, console=None)
-
-    def test_create_openai_service_without_api_key(self):
-        """Test creating OpenAI service without API key."""
-        config = TranscriptionConfig(
-            mode=TranscriptionMode.OPENAI_WHISPER, model_name="whisper-1", api_key=None
-        )
-
-        with pytest.raises(Exception, match="api_key client option must be set"):
-            TranscriptionServiceFactory.create_service(config)
-
-    def test_create_local_whisper_service(self):
-        """Test creating Local Whisper transcription service."""
-        config = TranscriptionConfig(
-            mode=TranscriptionMode.LOCAL_WHISPER, model_name="base"
-        )
-
-        with patch(
-            "src.voice_recorder.infrastructure.transcription.factory.LocalWhisperTranscriptionService"
-        ) as mock_service:
-            service = TranscriptionServiceFactory.create_service(config)
-            mock_service.assert_called_once_with(config, console=None)
-
-    def test_create_unsupported_mode(self):
-        """Test creating service with unsupported mode."""
-        config = TranscriptionConfig(
-            mode=TranscriptionMode.OPENAI_WHISPER, model_name="test"
-        )
-        # Manually set an invalid mode to test the factory
-        config.mode = "unsupported_mode"  # type: ignore
-
-        with pytest.raises(ValueError, match="Unsupported transcription mode"):
-            TranscriptionServiceFactory.create_service(config)
-
-    def test_create_service_with_console(self):
-        """Test creating service with console parameter."""
-        config = TranscriptionConfig(
-            mode=TranscriptionMode.OPENAI_WHISPER,
-            model_name="whisper-1",
-            api_key="test-key",
-        )
-
-        mock_console = Mock()
-
-        with patch(
-            "src.voice_recorder.infrastructure.transcription.factory.OpenAITranscriptionService"
-        ) as mock_service:
-            service = TranscriptionServiceFactory.create_service(
-                config, console=mock_console
+            mode=TranscriptionMode.OPENAI,
+            openai=OpenAITranscriptionConfig(
+                api_key="test-key",
+                whisper_model="whisper-1"
             )
-            mock_service.assert_called_once_with(config, console=mock_console)
+        )
+        
+        factory = SimpleTranscriptionServiceFactory()
+        service = factory.create_service(config)
+        
+        assert isinstance(service, SimpleTranscriptionService)
+        assert service.transcription_provider is not None
+        assert service.text_processor is None  # Basic service has no text processor
+    
+    def test_create_enhanced_service_openai(self):
+        """Test creating enhanced OpenAI service with new factory."""
+        config = TranscriptionConfig(
+            mode=TranscriptionMode.OPENAI,
+            openai=OpenAITranscriptionConfig(
+                api_key="test-key",
+                whisper_model="whisper-1"
+            )
+        )
+        
+        factory = SimpleTranscriptionServiceFactory()
+        service = factory.create_enhanced_service(config)
+        
+        assert isinstance(service, SimpleTranscriptionService)
+        assert service.transcription_provider is not None
+        assert service.text_processor is not None  # Enhanced service has text processor
+    
+    def test_create_custom_service(self):
+        """Test creating custom service with specific providers."""
+        from src.voice_recorder.infrastructure.transcription.providers import (
+            OpenAITranscriptionProvider,
+            OpenAITextProcessor
+        )
+        
+        transcription_config = OpenAITranscriptionConfig(
+            api_key="test-key",
+            whisper_model="whisper-1"
+        )
+        
+        factory = SimpleTranscriptionServiceFactory()
+        transcription_provider = OpenAITranscriptionProvider(transcription_config)
+        text_processor = OpenAITextProcessor(transcription_config)
+        
+        service = factory.create_custom_service(
+            transcription_provider, text_processor
+        )
+        
+        assert isinstance(service, SimpleTranscriptionService)
+        assert service.transcription_provider == transcription_provider
+        assert service.text_processor == text_processor
+    
+    def test_create_transcription_provider_openai(self):
+        """Test creating OpenAI transcription provider."""
+        config = TranscriptionConfig(
+            mode=TranscriptionMode.OPENAI,
+            openai=OpenAITranscriptionConfig(
+                api_key="test-key",
+                whisper_model="whisper-1"
+            )
+        )
+        
+        factory = SimpleTranscriptionServiceFactory()
+        provider = factory.create_transcription_provider(config)
+        
+        from src.voice_recorder.infrastructure.transcription.providers import OpenAITranscriptionProvider
+        assert isinstance(provider, OpenAITranscriptionProvider)
+    
+    def test_create_text_processor_openai(self):
+        """Test creating OpenAI text processor."""
+        config = TranscriptionConfig(
+            mode=TranscriptionMode.OPENAI,
+            openai=OpenAITranscriptionConfig(
+                api_key="test-key",
+                whisper_model="whisper-1"
+            )
+        )
+        
+        factory = SimpleTranscriptionServiceFactory()
+        processor = factory.create_text_processor(config)
+        
+        from src.voice_recorder.infrastructure.transcription.providers import OpenAITextProcessor
+        assert isinstance(processor, OpenAITextProcessor)

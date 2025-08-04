@@ -1,43 +1,15 @@
-# Voice Recorder Desktop Application
+# Voice Recorder CLI Application
 
-A professional voice recording desktop application for macOS with a modern Flow-style interface. Features real-time speech-to-text transcription using OpenAI's Whisper API, hotkey support, and beautiful animated UI.
+A professional voice recording command-line application for macOS with real-time speech-to-text transcription and AI-powered text enhancement.
 
-## Features
+## ✨ Features
 
-🎤 **Modern Desktop GUI**: Beautiful Flow-style interface with smooth animations  
-📝 **Real-time Transcription**: Instant speech-to-text with OpenAI Whisper  
+📝 **Dual Transcription Modes**: OpenAI Whisper (cloud) or local Whisper models  
+🤖 **Enhanced Transcription**: AI-powered grammar and punctuation improvement  
 ⌨️ **Hotkey Support**: Hands-free recording with customizable hotkeys  
-📊 **Live Statistics**: Track recordings, word counts, and success rates  
-💾 **Export Options**: Save transcriptions as TXT or JSON files  
-🎨 **Animated Interface**: Smooth hover effects and entrance animations  
-🖱️ **Manual Controls**: Click-to-record button for direct control  
-📋 **Copy to Clipboard**: Quick copy of transcribed text  
-⚙️ **Settings Integration**: Easy configuration management  
-🔄 **Session Management**: Track and view recording history
-
-## Architecture
-
-The application follows Clean Architecture principles with clear separation of concerns:
-
-```
-src/voice_recorder/
-├── domain/           # Core business logic and models
-├── services/         # Application business logic
-├── infrastructure/   # External dependencies (adapters)
-│   └── transcription/  # Transcription services module
-├── gui/             # Desktop GUI application
-│   ├── __init__.py
-│   └── main_window.py  # Flow-style main window
-└── api/             # Application entry points
-```
-
-### Design Patterns
-
-- **Dependency Injection**: All components are injected via interfaces
-- **Protocol/Interface Segregation**: Clear contracts between layers
-- **Factory Pattern**: Application factory for dependency setup
-- **Observer Pattern**: Hotkey event handling
-- **Repository Pattern**: Session management
+📋 **Auto-paste**: Automatic text insertion at cursor position  
+⚙️ **Interactive Setup**: Configuration wizard for easy setup  
+🔒 **Privacy Options**: Complete offline operation with local models  
 
 ## Installation
 
@@ -45,8 +17,7 @@ src/voice_recorder/
 
 - Python 3.11+
 - macOS (for system integration features)
-- OpenAI API key (for transcription)
-- PyQt6 (automatically installed)
+- OpenAI API key (for cloud transcription) or local Whisper model
 
 ### Setup
 
@@ -80,88 +51,248 @@ src/voice_recorder/
    brew install ffmpeg
    ```
 
-5. **Optional: Initialize configuration manually:**
-   ```python
-   from voice_recorder.infrastructure.config_manager import ConfigManager
-   
-   # Create default configuration
-   config_manager = ConfigManager()
-   config = config_manager.load_config()  # Creates default config if none exists
-   ```
-
-### Alternative Installation Methods
-
-**Using pip directly:**
-```bash
-pip install voice-recorder
-```
-
 ## Usage
 
-### Command Line Interface
+### Getting Started
+
+1. **Initialize configuration:**
+   ```bash
+   voice-recorder init
+   ```
+
+2. **Start recording:**
+   ```bash
+   voice-recorder
+   ```
+
+### Command Line Options
 
 ```bash
-# Start voice recorder with CLI
+# Initialize configuration (required on first run)
+voice-recorder init
+
+# Start voice recorder with default configuration
 voice-recorder
 
-# Run configuration wizard
-voice-recorder --config-wizard
-
-# Start GUI application
-voice-recorder-gui
+# Configuration management
+voice-recorder config show    # View current settings
+voice-recorder config path    # Show config file location  
+voice-recorder config reset   # Reset to defaults
 ```
 
 ### Hotkeys
 
-- **Right Shift**: Start/stop basic transcription
-- **Left Ctrl**: Start/stop enhanced transcription (with LLM improvement)
+- **Right Shift**: Basic transcription (speech → text)
+- **Left Ctrl**: Enhanced transcription (speech → text → AI improvement)
 - **Ctrl+C**: Stop the application
 
-### Configuration
+## 🔧 Configuration
 
-The application uses a configuration file located at `~/.voicerecorder/config.ini`. You can:
+The application uses a configuration file at `~/.voicerecorder/config.ini`. Here are common configuration examples:
 
-1. **Run the configuration wizard:**
-   ```bash
-   voice-recorder --config-wizard
-   ```
+### OpenAI Transcription (Cloud)
 
-2. **Edit the configuration manually:**
-   ```bash
-   nano ~/.voicerecorder/config.ini
-   ```
+**Best for: Highest accuracy, internet available**
 
-3. **Use example configurations:**
-   ```bash
-   cp examples/config_openai_whisper.ini ~/.voicerecorder/config.ini
-   ```
+```ini
+[transcription]
+mode = openai
 
-## Documentation
+[transcription.openai]
+api_key = sk-your-openai-key-here
+whisper_model = whisper-1
+gpt_model = gpt-3.5-turbo
+gpt_creativity = 0.3
+enhanced_transcription_prompt = Please improve the following transcribed text by fixing grammar, punctuation, and making it more coherent while preserving the original meaning. Only return the improved text without any explanations or additional commentary.
 
-Comprehensive documentation is available in the [`docs/`](./docs/) directory:
+[controls]
+basic_key = shift_r
+enhanced_key = ctrl_l
 
-- **[Architecture Documentation](./docs/)** - Detailed architecture guides
+[audio]
+sample_rate = 16000
+channels = 1
+format = wav
+chunk_size = 1024
+
+[general]
+auto_paste = true
+```
+
+**What this means:**
+- Uses OpenAI's Whisper API for transcription
+- Uses GPT-3.5-turbo for enhanced text improvement
+- `gpt_creativity = 0.3` means conservative enhancement (range 0.0-2.0)
+- Requires internet connection and OpenAI API key
+
+### Local Transcription (Offline)
+
+**Best for: Privacy, no internet required**
+
+```ini
+[transcription]
+mode = local
+
+[transcription.local]
+whisper_model = small
+ollama_base_url = http://localhost:11434
+ollama_model = llama3.1
+ollama_creativity = 0.3
+enhanced_transcription_prompt = Please improve the following transcribed text by fixing grammar, punctuation, and making it more coherent while preserving the original meaning. Only return the improved text without any explanations or additional commentary.
+
+[controls]
+basic_key = shift_r
+enhanced_key = ctrl_l
+
+[audio]
+sample_rate = 16000
+channels = 1
+format = wav
+chunk_size = 1024
+
+[general]
+auto_paste = true
+```
+
+**What this means:**
+- Uses local Whisper model for transcription (offline)
+- Uses Ollama running locally for enhanced text improvement
+- `whisper_model = small` for faster processing (can be `small`, `medium`, `large`)
+- Requires Ollama installed locally for enhanced transcription
+- Complete offline operation
+
+### Basic vs Enhanced Transcription
+
+#### Basic Transcription (Right Shift)
+- **Process**: Audio → Whisper → Raw text
+- **Speed**: Fast
+- **Quality**: Good transcription accuracy
+- **Example**: 
+  ```
+  Input: "um so i think we should uh maybe consider the new approach"
+  Output: "Um, so I think we should, uh, maybe consider the new approach."
+  ```
+
+#### Enhanced Transcription (Left Ctrl)
+- **Process**: Audio → Whisper → AI improvement → Polished text
+- **Speed**: Slower (requires additional AI processing)
+- **Quality**: Professional, polished text
+- **Example**: 
+  ```
+  Input: "um so i think we should uh maybe consider the new approach"
+  Output: "I think we should consider the new approach."
+  ```
+
+**Enhanced transcription benefits:**
+- Removes filler words (um, uh, like)
+- Fixes grammar and punctuation
+- Improves sentence structure
+- Makes text more professional and readable
+- Maintains original meaning
+
+### Configuration Options
+
+#### Transcription Settings
+- `mode`: `openai` (cloud) or `local` (offline)
+- `whisper_model`: For local mode: `small`, `medium`, `large`
+- `gpt_model`: For OpenAI mode: `gpt-3.5-turbo`, `gpt-4`, etc.
+- `gpt_creativity`/`ollama_creativity`: 0.0-2.0 (lower = more conservative)
+
+#### Control Settings
+- `basic_key`: Hotkey for basic transcription
+- `enhanced_key`: Hotkey for enhanced transcription
+- Available keys: `shift_r`, `shift_l`, `ctrl_l`, `ctrl_r`, `alt_l`, `alt_r`, `cmd_l`, `cmd_r`
+
+#### Audio Settings
+- `sample_rate`: Recording quality (16000 recommended for Whisper)
+- `channels`: 1 (mono) or 2 (stereo)
+- `format`: Audio format (`wav`, `mp3`, `flac`)
+
+#### General Settings
+- `auto_paste`: Automatically paste transcribed text (`true`/`false`)
+
+### Quick Setup Examples
+
+#### Method 1: Interactive Setup
+```bash
+voice-recorder init
+# Follow the prompts to configure transcription mode, API keys, and preferences
+```
+
+#### Method 2: Manual Configuration for Local Mode
+```bash
+# Create config directory
+mkdir -p ~/.voicerecorder
+
+# Create local transcription configuration
+cat > ~/.voicerecorder/config.ini << 'EOF'
+[transcription]
+mode = local
+
+[transcription.local]
+whisper_model = small
+
+[controls]
+basic_key = shift_r
+enhanced_key = ctrl_l
+
+[general]
+auto_paste = true
+EOF
+```
+
+#### Method 3: Manual Configuration for OpenAI Mode
+```bash
+# Create config directory
+mkdir -p ~/.voicerecorder
+
+# Create OpenAI transcription configuration
+cat > ~/.voicerecorder/config.ini << 'EOF'
+[transcription]
+mode = openai
+
+[transcription.openai]
+api_key = your-openai-api-key-here
+whisper_model = whisper-1
+gpt_model = gpt-3.5-turbo
+
+[controls]
+basic_key = shift_r
+enhanced_key = ctrl_l
+
+[general]
+auto_paste = true
+EOF
+```
+
+## Architecture
+
+The application follows Clean Architecture principles with clear separation of concerns:
+
+```
+src/voice_recorder/
+├── domain/           # Core business logic and models
+├── services/         # Application business logic
+├── infrastructure/   # External dependencies (adapters)
+│   └── transcription/  # Transcription services module
+├── cli/             # Command-line interface
+└── api/             # Application entry points
+```
+
+### Design Patterns
+
+- **Dependency Injection**: All components are injected via interfaces
+- **Protocol/Interface Segregation**: Clear contracts between layers
+- **Factory Pattern**: Application factory for dependency setup
+- **Observer Pattern**: Hotkey event handling
+
+## 📚 Documentation
+
+### Additional Documentation
 - **[Troubleshooting](./docs/HOTKEY_TROUBLESHOOTING.md)** - Common issues and solutions
-- **[Configuration Examples](./examples/)** - Sample configuration files
+- **[Enhanced Transcription Guide](./docs/ENHANCED_TRANSCRIPTION.md)** - AI configuration details
 
 ## Development
-
-### Project Structure
-
-```
-voice-recorder/
-├── docs/                          # Documentation
-├── examples/                      # Configuration examples
-├── src/voice_recorder/           # Source code
-│   ├── api/                      # Application entry points
-│   ├── cli/                      # Command-line interface
-│   ├── domain/                   # Core business logic
-│   ├── gui/                      # Graphical user interface
-│   ├── infrastructure/           # External dependencies
-│   └── services/                 # Application services
-├── tests/                        # Test suite
-└── README.md                     # This file
-```
 
 ### Running Tests
 
@@ -174,7 +305,6 @@ pytest --cov=src/voice_recorder
 
 # Run specific test categories
 pytest tests/unit/
-pytest tests/integration/
 ```
 
 ### Code Quality
@@ -188,6 +318,9 @@ flake8 src/
 
 # Formatting
 black src/
+
+# All quality checks at once
+pytest && mypy src/ && black --check src/ && flake8 src/
 ```
 
 ## Contributing

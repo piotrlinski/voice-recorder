@@ -71,87 +71,7 @@ Please improve the following transcribed text by fixing grammar, punctuation, an
    Please improve the following transcribed text to technical documentation standards with clear, precise language and proper technical terminology while maintaining accuracy.
    ```
 
-#### Sound Configuration
 
-You can customize the audio feedback sounds to distinguish between basic and enhanced transcription:
-
-**Current Configuration** (Sweep Tones):
-```ini
-[sound]
-enabled = True
-volume = 5
-
-# Basic transcription - Sweep tone (600→800 Hz) for both start and stop
-basic_sound_type = tone
-basic_start_frequency = 600.0
-basic_end_frequency = 800.0
-
-# Enhanced transcription - Sweep tone (1000→1200 Hz) for both start and stop
-enhanced_sound_type = tone
-enhanced_start_frequency = 1000.0
-enhanced_end_frequency = 1200.0
-
-duration = 0.3
-```
-
-**Alternative Configuration** (Mixed Sound Types):
-```ini
-[sound]
-enabled = True
-volume = 5
-
-# Basic transcription - Simple beep for both start and stop
-basic_sound_type = beep
-basic_start_frequency = 800.0
-basic_end_frequency = 800.0
-
-# Enhanced transcription - Sweep tone for both start and stop
-enhanced_sound_type = tone
-enhanced_start_frequency = 1000.0
-enhanced_end_frequency = 1200.0
-
-duration = 0.3
-```
-
-**Sound Configuration Options**:
-
-1. **Enable/Disable All Sounds**: Set `enabled = False` to disable all audio feedback
-2. **Disable Start Sounds Only**: Set `disable_start_sounds = True` to skip start recording sounds but keep stop sounds
-3. **Sound Types**: Choose between `tone`, `beep`, or `none` for each mode
-4. **Volume Control**: Adjust volume from 0-100%
-5. **Frequency Ranges**: Customize start/end frequencies for sweep tones
-
-**Example: Disable Start Sounds Only**:
-```ini
-[sound]
-enabled = True
-disable_start_sounds = True  # Skip start sounds, keep stop sounds
-volume = 10
-basic_sound_type = tone
-basic_start_frequency = 600.0
-basic_end_frequency = 800.0
-enhanced_sound_type = tone
-enhanced_start_frequency = 1000.0
-enhanced_end_frequency = 1200.0
-duration = 0.2
-```
-
-**Sound Behavior**:
-- **Start**: Ascending sweep tone (low→high frequency)
-- **Stop**: Descending sweep tone (high→low frequency)
-- **Basic Mode**: Lower frequency range (600→800 Hz) - deeper sweep
-- **Enhanced Mode**: Higher frequency range (1000→1200 Hz) - brighter sweep
-- **Distinction**: Different frequency ranges help identify which mode you're using
-
-**Sound Type Options**:
-- `tone` - Custom frequency tone (consistent for start/stop)
-- `beep` - Simple system beep
-- `none` - No sound feedback
-
-**Frequency Guidelines**:
-- **Low (400-800 Hz)**: Deep, bass-like sounds
-- **Medium (800-1200 Hz)**: Standard notification sounds
-- **High (1200-2000 Hz)**: Bright, attention-grabbing sounds
 
 #### Configuration File Example
 
@@ -183,16 +103,6 @@ channels = 1
 format = wav
 chunk_size = 1024
 
-[sound]
-enabled = True
-volume = 5
-basic_sound_type = tone
-basic_start_frequency = 600.0
-basic_end_frequency = 800.0
-enhanced_sound_type = tone
-enhanced_start_frequency = 1200.0
-enhanced_end_frequency = 1600.0
-duration = 0.3
 
 [general]
 auto_paste = True
@@ -301,6 +211,4 @@ See the `examples/` directory for complete configuration examples:
 
 - `config_enhanced_transcription.ini` - Basic enhanced transcription setup
 - `config_enhanced_transcription_prompt.ini` - Custom prompt examples
-- `config_distinct_sounds.ini` - Different frequencies for basic/enhanced
-- `config_mixed_sounds.ini` - Different sound types for basic/enhanced
 - `config_high_quality.ini` - High-quality settings for professional use 

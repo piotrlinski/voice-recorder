@@ -1,36 +1,52 @@
 """
-Transcription module for voice recorder.
+Clean, simple transcription module.
 
-This module provides transcription services using various providers and architectures.
+This module provides transcription services using a clean architecture:
+- Simple protocols instead of complex base classes
+- Composition instead of inheritance
+- Clear separation of concerns
+
+Usage:
+    # Basic usage
+    factory = SimpleTranscriptionServiceFactory()
+    service = factory.create_service(config, console)
+    result = service.transcribe("audio.wav")
+    
+    # Enhanced service with text improvement
+    enhanced_service = factory.create_enhanced_service(config, console)
+    result = enhanced_service.transcribe_and_enhance("audio.wav")
+    
+    # Flexible custom composition
+    transcription_provider = OpenAITranscriptionProvider(openai_config)
+    text_processor = OllamaTextProcessor(local_config)
+    custom_service = factory.create_custom_service(transcription_provider, text_processor)
 """
 
-# Base classes
-from .base.base_transcription_service import BaseTranscriptionService
-from .base.base_enhancement_service import BaseEnhancementService
-from .base.base_enhanced_service import BaseEnhancedService
+# Main factory
+from .simple_factory import SimpleTranscriptionServiceFactory
+from .service import SimpleTranscriptionService
+from .protocols import TranscriptionProvider, TextProcessor
 
-# Factory
-from .factory import TranscriptionServiceFactory
-
-# Providers
-from .providers.whisper import OpenAIWhisperProvider, LocalWhisperProvider
-from .providers.llm import OpenAIGPTProvider, OllamaProvider
-from .providers.composite import OpenAIEnhancedService, LocalEnhancedService
+# Individual providers (for custom composition)
+from .providers import (
+    OpenAITranscriptionProvider,
+    LocalTranscriptionProvider,
+    OpenAITextProcessor,
+    OllamaTextProcessor,
+    NoTextProcessor,
+)
 
 __all__ = [
-    # Factory
-    "TranscriptionServiceFactory",
+    # Main factory
+    "SimpleTranscriptionServiceFactory",
+    "SimpleTranscriptionService",
+    "TranscriptionProvider",
+    "TextProcessor",
     
-    # Base classes
-    "BaseTranscriptionService",
-    "BaseEnhancementService", 
-    "BaseEnhancedService",
-    
-    # Providers
-    "OpenAIWhisperProvider",
-    "LocalWhisperProvider",
-    "OpenAIGPTProvider",
-    "OllamaProvider",
-    "OpenAIEnhancedService",
-    "LocalEnhancedService",
+    # Individual providers
+    "OpenAITranscriptionProvider",
+    "LocalTranscriptionProvider", 
+    "OpenAITextProcessor",
+    "OllamaTextProcessor",
+    "NoTextProcessor",
 ]
