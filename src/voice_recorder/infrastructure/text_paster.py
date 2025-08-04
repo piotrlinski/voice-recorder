@@ -32,6 +32,9 @@ class MacOSTextPaster(TextPasterInterface):
                 """
                 subprocess.run(["osascript", "-e", script], check=True)
 
+                # Clear clipboard after successful paste
+                self.clear_clipboard()
+
                 if self.console:
                     self.console.info("Text pasted successfully")
                 return True
@@ -60,6 +63,9 @@ class MacOSTextPaster(TextPasterInterface):
                 end tell
                 """
                 subprocess.run(["osascript", "-e", script], check=True)
+
+                # Clear clipboard after successful paste
+                self.clear_clipboard()
 
                 if self.console:
                     self.console.info("Text pasted at mouse position")
@@ -107,6 +113,9 @@ class MacOSTextPaster(TextPasterInterface):
                     """
                     subprocess.run(["osascript", "-e", paste_script], check=True)
 
+                    # Clear clipboard after successful paste
+                    self.clear_clipboard()
+
                     if self.console:
                         self.console.info("Text pasted at mouse position")
                     return True
@@ -118,6 +127,9 @@ class MacOSTextPaster(TextPasterInterface):
                     end tell
                     """
                     subprocess.run(["osascript", "-e", fallback_script], check=True)
+
+                    # Clear clipboard after successful paste
+                    self.clear_clipboard()
 
                     if self.console:
                         self.console.info("Text pasted successfully")
@@ -139,3 +151,23 @@ class MacOSTextPaster(TextPasterInterface):
             return self.paste_at_mouse_position(text)
         else:
             return self.paste_text(text)
+    
+    def clear_clipboard(self) -> bool:
+        """Clear the clipboard contents."""
+        try:
+            # Clear clipboard by setting it to empty string
+            process = subprocess.Popen(["pbcopy"], stdin=subprocess.PIPE, text=True)
+            process.communicate(input="")
+            
+            if process.returncode == 0:
+                if self.console:
+                    self.console.debug("Clipboard cleared successfully")
+                return True
+            else:
+                if self.console:
+                    self.console.error("Failed to clear clipboard")
+                return False
+        except Exception as e:
+            if self.console:
+                self.console.error(f"Clipboard clearing failed: {e}")
+            return False

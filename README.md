@@ -288,9 +288,100 @@ src/voice_recorder/
 
 ## 📚 Documentation
 
-### Additional Documentation
-- **[Troubleshooting](./docs/HOTKEY_TROUBLESHOOTING.md)** - Common issues and solutions
-- **[Enhanced Transcription Guide](./docs/ENHANCED_TRANSCRIPTION.md)** - AI configuration details
+### Generating Documentation
+
+This project includes comprehensive Sphinx documentation that can be built and deployed locally:
+
+#### Quick Start
+```bash
+# Install documentation dependencies
+pip install -e ".[docs]"
+
+# Build documentation locally
+make docs-html
+
+# Serve locally for testing
+make docs-serve
+# Open http://localhost:8000 in your browser
+```
+
+#### Prerequisites for Documentation
+```bash
+# Install documentation dependencies
+pip install -e ".[docs]"
+```
+
+#### Manual Documentation Commands
+```bash
+# Build HTML documentation
+make docs-html
+
+# Build and serve locally
+make docs-serve
+
+# Clean build directory
+make docs-clean
+
+# Show all available make targets
+make help
+```
+
+### Documentation Structure
+- **API Reference**: Complete auto-generated API documentation
+- **User Guide**: Installation, configuration, and usage instructions
+- **Developer Guide**: Architecture, contributing, and development setup
+- **Examples**: Common usage patterns and configuration examples
+
+#### GitHub Pages Setup
+
+Documentation is served directly from the main branch on GitHub Pages.
+
+**Setup:**
+1. **Enable GitHub Pages**:
+   - Go to repository **Settings** → **Pages**
+   - Under **Source**, select **Deploy from a branch**
+   - Select branch: **main**
+   - Select folder: **docs/sphinx/_build/html**
+
+2. **Documentation URL**:
+   Your documentation will be available at: `https://your-username.github.io/voice-recorder`
+
+#### Documentation Development Workflow
+
+1. **Make changes** to documentation files in `docs/sphinx/`
+2. **Build and test locally**: 
+   ```bash
+   make docs-html
+   make docs-serve
+   ```
+3. **Review locally** at `http://localhost:8000`
+4. **Commit and push** built documentation to main branch:
+   ```bash
+   git add docs/sphinx/_build/html/
+   git commit -m "Update documentation"
+   git push origin main
+   ```
+
+#### Advanced Documentation
+
+The documentation system includes:
+- **Auto-generated API docs** from docstrings
+- **Google-style docstring** support
+- **Type hints integration** 
+- **Cross-references** to Python docs
+- **Modern Sphinx Awesome theme**
+- **Search functionality**
+- **Mobile-responsive design**
+
+#### Troubleshooting Documentation
+
+**Common issues:**
+- **Build failures**: Ensure you have installed docs dependencies: `pip install -e ".[docs]"`
+- **Missing modules**: Verify your virtual environment is activated and the package is installed
+- **Import errors**: Check that all source code is importable from the docs directory
+
+### Complete Documentation
+For comprehensive documentation including API reference, configuration guides, and examples, see the built documentation at `docs/sphinx/_build/html/index.html` or visit the online documentation.
 
 ## Development
 
@@ -339,6 +430,6 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 ## Support
 
 For issues and questions:
-- Check the [troubleshooting guide](./docs/HOTKEY_TROUBLESHOOTING.md)
-- Review the [documentation](./docs/)
+- Review the comprehensive documentation at `docs/sphinx/_build/html/`
+- Check the configuration examples above
 - Open an issue on GitHub

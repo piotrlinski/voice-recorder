@@ -1,11 +1,10 @@
 # Include README and license files
 include README.md
 include LICENSE
-include CHANGELOG.md
+include Makefile
 
 # Include configuration files
 include pyproject.toml
-include pytest.ini
 
 # Include test files
 recursive-include tests *.py

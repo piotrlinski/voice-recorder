@@ -1,5 +1,9 @@
 """
 Domain models for the voice recorder application.
+
+This module contains all the data models used throughout the application,
+including configuration models, recording session models, and transcription
+result models. All models use Pydantic for data validation and serialization.
 """
 
 from datetime import datetime
@@ -10,7 +14,17 @@ from pydantic import BaseModel, Field
 
 
 class RecordingState(str, Enum):
-    """Recording state enumeration."""
+    """Recording state enumeration.
+    
+    Represents the various states a recording session can be in during its lifecycle.
+    
+    Attributes:
+        IDLE: Session is created but no recording has started
+        RECORDING: Audio is currently being recorded
+        PROCESSING: Recording finished, transcription in progress
+        COMPLETED: Transcription completed successfully
+        ERROR: An error occurred during recording or processing
+    """
 
     IDLE = "idle"
     RECORDING = "recording"
@@ -188,7 +202,27 @@ class GeneralConfig(BaseModel):
 
 
 class ApplicationConfig(BaseModel):
-    """Application configuration with nested transcription modes."""
+    """Application configuration with nested transcription modes.
+    
+    Main configuration model that contains all settings for the voice recorder
+    application including transcription providers, hotkey controls, audio settings,
+    and general application behavior.
+    
+    Attributes:
+        transcription: Transcription service configuration (OpenAI or local)
+        controls: Hotkey configuration for basic and enhanced recording
+        audio: Audio recording settings (sample rate, format, etc.)
+        general: General application settings (auto-paste, etc.)
+        
+    Example:
+        >>> config = ApplicationConfig(
+        ...     transcription=TranscriptionConfig(mode=TranscriptionMode.OPENAI),
+        ...     controls=ControlsConfig(basic_key="shift_r", enhanced_key="ctrl_l"),
+        ...     general=GeneralConfig(auto_paste=True)
+        ... )
+        >>> print(config.transcription.mode)
+        openai
+    """
 
     transcription: TranscriptionConfig = Field(default_factory=TranscriptionConfig)
     controls: ControlsConfig = Field(

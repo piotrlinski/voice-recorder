@@ -83,25 +83,17 @@ format = wav
 chunk_size = 1024
 
 [transcription]
-mode = openai_whisper
-model_name = whisper-1
+mode = openai
 
-[hotkey]
-key = shift
-modifiers = 
-description = Shift key for recording
+[transcription.openai]
+api_key = test-key
 
-[sound]
-enabled = true
-sound_type = tone
-volume = 0.15
-start_frequency = 800.0
-end_frequency = 1200.0
-duration = 0.3
+[controls]
+basic_key = shift_r
+enhanced_key = ctrl_l
 
 [general]
 auto_paste = true
-temp_directory = /tmp
 """
             config_file = Path(temp_dir) / "config.ini"
             config_file.write_text(config_content)
@@ -111,8 +103,7 @@ temp_directory = /tmp
             assert isinstance(config, ApplicationConfig)
             assert config.audio.sample_rate == 16000
             assert config.transcription.mode == TranscriptionMode.OPENAI
-            assert config.controls.basic_key == "shift"
-            assert config.sound.enabled is True
+            assert config.controls.basic_key == "shift_r"
             assert config.general.auto_paste is True
 
     def test_save_config(self):
@@ -133,7 +124,6 @@ temp_directory = /tmp
             assert "[audio]" in content
             assert "[transcription]" in content
             assert "[controls]" in content
-            assert "[sound]" in content
             assert "[general]" in content
 
     def test_create_default_config(self):

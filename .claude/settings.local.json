@@ -22,7 +22,13 @@
       "Bash(pkill:*)",
       "Bash(kill:*)",
       "Bash(osascript:*)",
-      "Bash(black:*)"
+      "Bash(black:*)",
+      "Bash(make:*)",
+      "Bash(chmod:*)",
+      "mcp__ide__getDiagnostics",
+      "Bash(./scripts/docs.sh:*)",
+      "Bash(pytest:*)",
+      "Bash(git add:*)"
     ],
     "deny": []
   }

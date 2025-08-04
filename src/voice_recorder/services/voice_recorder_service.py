@@ -1,5 +1,8 @@
 """
 Voice recorder service implementation.
+
+This module contains the main service class that orchestrates all voice recording
+functionality including audio recording, transcription, and text processing.
 """
 
 import os
@@ -25,7 +28,48 @@ from ..domain.models import (
 
 
 class VoiceRecorderService:
-    """Main voice recorder service orchestrating all components."""
+    """Main voice recorder service orchestrating all components.
+    
+    This service coordinates between audio recording, transcription, hotkey detection,
+    text pasting, and session management to provide a complete voice recording solution.
+    
+    The service supports two transcription modes:
+    - Basic: Direct speech-to-text transcription
+    - Enhanced: Speech-to-text with AI-powered text improvement
+    
+    Attributes:
+        audio_recorder: Interface for audio recording functionality
+        transcription_service: Basic transcription service
+        enhanced_transcription_service: Enhanced transcription with AI improvement
+        hotkey_listener: Hotkey detection and event handling
+        text_paster: Text insertion functionality
+        session_manager: Recording session management
+        config: Application configuration
+        console: Logging and console output interface
+        current_session: Currently active recording session
+        is_recording: Whether a recording is currently in progress
+        hotkey_pressed: Whether a hotkey is currently pressed
+        recording_type: Type of recording ('basic' or 'enhanced')
+    
+    Example:
+        >>> from voice_recorder.services.voice_recorder_service import VoiceRecorderService
+        >>> from voice_recorder.domain.models import ApplicationConfig
+        >>> 
+        >>> # Initialize with dependency injection
+        >>> service = VoiceRecorderService(
+        ...     audio_recorder=audio_recorder,
+        ...     transcription_service=transcription_service,
+        ...     hotkey_listener=hotkey_listener,
+        ...     text_paster=text_paster,
+        ...     session_manager=session_manager,
+        ...     config=config,
+        ...     console=console
+        ... )
+        >>> 
+        >>> # Start the service
+        >>> service.start()
+        >>> # Service will now listen for hotkey events
+    """
 
     @staticmethod
     def _is_meaningful_transcription(text: str) -> bool:
@@ -92,7 +136,24 @@ class VoiceRecorderService:
             EnhancedTranscriptionServiceInterface | None
         ) = None,
     ):
-        """Initialize the voice recorder service."""
+        """Initialize the voice recorder service.
+        
+        Args:
+            audio_recorder: Audio recording interface implementation
+            transcription_service: Basic transcription service for speech-to-text
+            hotkey_listener: Hotkey detection and event handling service  
+            text_paster: Text insertion service for auto-paste functionality
+            session_manager: Recording session management service
+            config: Application configuration with transcription and control settings
+            console: Logging and console output interface
+            enhanced_transcription_service: Optional enhanced transcription service
+                that provides AI-powered text improvement capabilities
+                
+        Note:
+            All dependencies are injected following dependency inversion principle.
+            The service will operate in basic mode only if enhanced_transcription_service
+            is None.
+        """
         self.audio_recorder = audio_recorder
         self.transcription_service = transcription_service
         self.enhanced_transcription_service = enhanced_transcription_service
@@ -112,7 +173,19 @@ class VoiceRecorderService:
         self._processing_lock = threading.Lock()
 
     def start(self) -> None:
-        """Start the voice recorder service."""
+        """Start the voice recorder service.
+        
+        Initializes hotkey listeners and begins monitoring for recording events.
+        The service will listen for both basic and enhanced transcription hotkeys
+        as configured in the application config.
+        
+        Raises:
+            RuntimeError: If the hotkey listener fails to start or initialize
+            
+        Note:
+            This method is non-blocking. The service runs in the background
+            and processes hotkey events asynchronously.
+        """
         try:
             # Set up callbacks for separate basic and enhanced keys
             self.hotkey_listener.set_callbacks(
@@ -125,7 +198,20 @@ class VoiceRecorderService:
             raise
 
     def stop(self) -> None:
-        """Stop the voice recorder service."""
+        """Stop the voice recorder service.
+        
+        Gracefully shuts down the service by:
+        1. Stopping any active recording
+        2. Waiting for transcription processing to complete
+        3. Stopping the hotkey listener
+        
+        The method will wait up to 10 seconds for active transcription
+        processing to complete before forcing shutdown.
+        
+        Note:
+            This method is blocking and will wait for clean shutdown.
+            Any active recording will be properly saved and processed.
+        """
         try:
             if self.is_recording:
                 self._stop_current_recording()
@@ -278,6 +364,9 @@ class VoiceRecorderService:
                 self.console.warning("No audio file generated")
                 self.current_session.state = RecordingState.ERROR
                 self.session_manager.update_session(self.current_session)
+                # Reset recording state to allow new recordings
+                self.is_recording = False
+                self.current_session = None
                 return
                 
             # Update session with audio file path
@@ -305,6 +394,9 @@ class VoiceRecorderService:
             if self.current_session:
                 self.current_session.state = RecordingState.ERROR
                 self.session_manager.update_session(self.current_session)
+            # Reset recording state to allow new recordings
+            self.is_recording = False
+            self.current_session = None
     
     def _process_basic_transcription_async(self, audio_file_path: str, session_id: str) -> None:
         """Process basic transcription in background thread."""
@@ -429,6 +521,9 @@ class VoiceRecorderService:
                 self.console.warning("No audio file generated")
                 self.current_session.state = RecordingState.ERROR
                 self.session_manager.update_session(self.current_session)
+                # Reset recording state to allow new recordings
+                self.is_recording = False
+                self.current_session = None
                 return
 
             # Update session with audio file path
@@ -456,6 +551,9 @@ class VoiceRecorderService:
             if self.current_session:
                 self.current_session.state = RecordingState.ERROR
                 self.session_manager.update_session(self.current_session)
+            # Reset recording state to allow new recordings
+            self.is_recording = False
+            self.current_session = None
     
     def _process_enhanced_transcription_async(self, audio_file_path: str, session_id: str) -> None:
         """Process enhanced transcription in background thread."""
